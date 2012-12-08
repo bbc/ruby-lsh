@@ -1,6 +1,6 @@
 require_relative '../lib/lsh'
 
-index = LSH::Index.new(1000, 8, 50, 20)
+index = LSH::Index.new(1000, 8, 10, 150)
 
 # Test dataset
 vectors = []
@@ -16,8 +16,9 @@ vectors.each_with_index do |vector, i|
   similarities = vectors.map { |v| vector * v.col }
   similarities.sort!.reverse!
   k = 0
-  while k < results.size and similarities[k] == results[k] * vector.col
+  results_similarities = results.map { |r| r * vector.col }
+  while k < results.size and results_similarities.member? similarities[k]
     k += 1
   end
-  $stderr.puts "#{k} nearest neighbors appear in results"
+  $stderr.puts "Nearest neightbours up to #{k} appear in results"
 end

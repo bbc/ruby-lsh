@@ -50,7 +50,6 @@ module LSH
     end
 
     def hash(vector, projection)
-      r = GSL::Rng.alloc
       hash = []
       projection.each do |random_vector|
         dot_product = vector * random_vector.col
