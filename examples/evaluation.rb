@@ -11,8 +11,10 @@ vectors.each { |v| index.add(v) }
 
 # Nearest neighbors in query result?
 scores = []
+sizes = []
 vectors.each_with_index do |vector, i|
   results = index.query(vector)
+  sizes << results.size
   $stderr.puts "#{results.count} results for vector #{i}"
   similarities = vectors.map { |v| vector * v.col }
   similarities.sort!.reverse!
@@ -24,6 +26,11 @@ vectors.each_with_index do |vector, i|
   $stderr.puts "Nearest neighbours up to #{k} appear in results"
   scores << k - 1
 end
+
+avg_size = 0.0
+sizes.each { |s| avg_size += s }
+avg_size /= sizes.size
+$stderr.puts "Average number of results: #{avg_size}"
 
 p = 0.0
 scores.each { |s| p += 1 if s > 0 }
