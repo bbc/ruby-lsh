@@ -20,8 +20,7 @@ vectors.each_with_index do |vector, i|
   similarities.sort!.reverse!
   k = 0
   results_similarities = results.map { |r| r * vector.col }
-  while k < results.size and results_similarities.member? similarities[k]
-    $stderr.puts "Index of nearest neighbour #{k} in results: #{results_similarities.index(similarities[k])}"
+  while k < results.size and results_similarities[k] == similarities[k]
     k += 1
   end
   $stderr.puts "Nearest neighbours up to #{k} appear in results"
