@@ -35,15 +35,10 @@ module LSH
         # Take query hash, move it around at radius r, hash it and use the result as a query
         results += bucket[hash_i] if bucket.has_key? hash_i
         if multiprobe_radius > 0
-          direct_vector = hash.map { |h| h >= 0 ? -1 : 1 }
           (1..multiprobe_radius).to_a.each do |radius|
-            (0..(@number_of_random_vectors - 1)).to_a.combination(radius).each do |dimensions|
-              delta_vector = [0] * @number_of_random_vectors
-              dimensions.each { |d| delta_vector[d] = 1 }
-              probe = []
-              hash.each_with_index do |h, i|
-                probe << h + delta_vector[i] * direct_vector[i]
-              end
+            (0..(@number_of_random_vectors - 1)).to_a.combination(radius).each do |flips|
+              probe = hash.clone
+              flips.each { |d| probe[d] = (probe[d] == 1) ? 0 : 1  }
               probe_hash = array_to_hash(probe)
               results += bucket[probe_hash] if bucket.has_key?(probe_hash)
             end
