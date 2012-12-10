@@ -1,10 +1,10 @@
 require_relative '../lib/lsh'
 
-dim = 10 # Dimension
-hash_size = 8 # Hash size (in bits for binary LSH)
+dim = 100 # Dimension
+hash_size = 10 # Hash size (in bits for binary LSH)
 window_size = Float::INFINITY # Binary LSH
 n_projections = 50 # Number of independent projections
-multiprobe_radius = 0 # Multiprobe radius (set to 0 to disable multiprobe)
+multiprobe_radius = 1 # Multiprobe radius (set to 0 to disable multiprobe)
 
 index = LSH::Index.new(dim, hash_size, Float::INFINITY, n_projections)
 
