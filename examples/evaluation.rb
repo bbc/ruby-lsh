@@ -4,6 +4,7 @@ dim = 10 # Dimension
 hash_size = 8 # Hash size (in bits for binary LSH)
 window_size = Float::INFINITY # Binary LSH
 n_projections = 50 # Number of independent projections
+multiprobe_radius = 0 # Multiprobe radius (set to 0 to disable multiprobe)
 
 index = LSH::Index.new(dim, hash_size, Float::INFINITY, n_projections)
 
@@ -18,7 +19,7 @@ vectors.each { |v| index.add(v) }
 scores = []
 sizes = []
 vectors.each_with_index do |vector, i|
-  results = index.query(vector)
+  results = index.query(vector, multiprobe_radius)
   sizes << results.size
   $stderr.puts "#{results.count} results for vector #{i}"
   similarities = vectors.map { |v| vector * v.col }

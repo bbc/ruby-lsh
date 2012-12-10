@@ -18,21 +18,37 @@ module LSH
 
     def add(vector)
       hashes(vector).each_with_index do |hash, i|
-        if @buckets[i].has_key? hash
-          @buckets[i][hash] << vector
+        hash_i = array_to_hash(hash)
+        if @buckets[i].has_key? hash_i
+          @buckets[i][hash_i] << vector
         else
-          @buckets[i][hash] = [vector]
+          @buckets[i][hash_i] = [vector]
         end
       end
     end
 
-    def query(vector)
+    def query(vector, multiprobe_radius = 0)
       results = []
       hashes(vector).each_with_index do |hash, i|
+        hash_i = array_to_hash(hash)
         bucket = @buckets[i]
-        # TODO - multiprobe LSH
-        # Take query hash, move it for each dimension at radius r, hash it and use the result as a query
-        results += bucket[hash] if bucket.has_key? hash
+        # Take query hash, move it around at radius r, hash it and use the result as a query
+        results += bucket[hash_i] if bucket.has_key? hash_i
+        if multiprobe_radius > 0
+          direct_vector = hash.map { |h| h >= 0 ? -1 : 1 }
+          (1..multiprobe_radius).to_a.each do |radius|
+            (0..(@number_of_random_vectors - 1)).to_a.combination(radius).each do |dimensions|
+              delta_vector = [0] * @number_of_random_vectors
+              dimensions.each { |d| delta_vector[d] = 1 }
+              probe = []
+              hash.each_with_index do |h, i|
+                probe << h + delta_vector[i] * direct_vector[i]
+              end
+              probe_hash = array_to_hash(probe)
+              results += bucket[probe_hash] if bucket.has_key?(probe_hash)
+            end
+          end
+        end
       end
       results.uniq!
       results.sort { |r1, r2| vector * r2.col <=> vector * r1.col }
@@ -66,7 +82,7 @@ module LSH
           hash << (b + dot_product / @window).floor
         end
       end
-      array_to_hash(hash)
+      hash
     end
 
     def array_to_hash(array)
