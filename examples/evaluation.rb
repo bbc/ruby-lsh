@@ -1,10 +1,15 @@
 require_relative '../lib/lsh'
 
-index = LSH::Index.new(10, 8, Float::INFINITY, 50)
+dim = 10 # Dimension
+hash_size = 8 # Hash size (in bits for binary LSH)
+window_size = Float::INFINITY # Binary LSH
+n_projections = 50 # Number of independent projections
+
+index = LSH::Index.new(dim, hash_size, Float::INFINITY, n_projections)
 
 # Test dataset
 vectors = []
-100.times { |i| vectors << index.random_vector(10) } 
+100.times { |i| vectors << index.random_vector(dim) } 
 
 # Adding to index
 vectors.each { |v| index.add(v) }
