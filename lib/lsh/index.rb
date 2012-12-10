@@ -4,7 +4,7 @@ module LSH
 
   class Index
 
-    def initialize(dim, k, w, l)
+    def initialize(dim, k, w = Float::INFINITY, l = 150)
       @random = GSL::Rng.alloc # default seed of 0
       @window = w
       @dim = dim
@@ -54,13 +54,31 @@ module LSH
       projection.each do |random_vector|
         dot_product = vector * random_vector.col
         if bias
-          r = @random.uniform * @window
+          b = @random.uniform
         else
-          r = 0.0
+          b = 0.0
         end
-        hash << ((dot_product + r) / @window).floor
+        if @window == Float::INFINITY # Binary LSH
+          if dot_product >= 0
+            hash << 1
+          else
+            hash << 0
+          end
+        else
+          b = bias ? @random.uniform : 0.0
+          hash << (b + dot_product / @window).floor
+        end
       end
-      hash
+      array_to_hash(hash)
+    end
+
+    def array_to_hash(array)
+      return 0 if array.size == 0
+      value = (array.first << 7)
+      array.each do |v|
+        value = (101 * value + v) & 0xffffff
+      end
+      value
     end
 
     def generate_projections(dim, k, l)
