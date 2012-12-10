@@ -35,7 +35,8 @@ module LSH
           results += bucket[sorted_keys[k]]
         end
       end
-      results.uniq
+      results.uniq!
+      results.sort { |r1, r2| vector * r2.col <=> vector * r1.col }
     end
 
     def hashes(vector)
