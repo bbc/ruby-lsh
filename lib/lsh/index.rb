@@ -5,7 +5,8 @@ module LSH
   class Index
 
     def initialize(dim, k, w = Float::INFINITY, l = 150)
-      @random = GSL::Rng.alloc # default seed of 0
+      @random = GSL::Rng.alloc
+      @random.set(rand(1000)) # Overriding seed
       @window = w
       @dim = dim
       @number_of_random_vectors = k

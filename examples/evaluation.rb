@@ -36,3 +36,8 @@ p = 0.0
 scores.each { |s| p += 1 if s > 0 }
 p /= scores.size.to_f
 $stderr.puts "Probability of nearest neighbour being in results: #{p}"
+
+nn = 0.0
+scores.each { |s| nn += s }
+nn /= scores.size.to_f
+$stderr.puts "Average number of nearest neighbours in results: #{nn}"
