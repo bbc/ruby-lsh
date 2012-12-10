@@ -49,11 +49,11 @@ module LSH
       hashes
     end
 
-    def hash(vector, projection, q_error = true)
+    def hash(vector, projection, bias = true)
       hash = []
       projection.each do |random_vector|
         dot_product = vector * random_vector.col
-        if q_error
+        if bias
           r = @random.uniform * @window
         else
           r = 0.0
