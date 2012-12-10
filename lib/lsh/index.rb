@@ -26,15 +26,13 @@ module LSH
       end
     end
 
-    def query(vector, number_of_buckets = 1)
+    def query(vector)
       results = []
       hashes(vector).each_with_index do |hash, i|
         bucket = @buckets[i]
-        sorted_keys = bucket.keys.sort { |k1, k2| (k1 - hash).abs <=> (k2 - hash).abs }
-        sorted_keys = sorted_keys.first(number_of_buckets)
-        sorted_keys.size.times.each do |k|
-          results += bucket[sorted_keys[k]]
-        end
+        # TODO - multiprobe LSH
+        # Take query hash, move it for each dimension at radius r, hash it and use the result as a query
+        results += bucket[hash] if bucket.has_key? hash
       end
       results.uniq!
       results.sort { |r1, r2| vector * r2.col <=> vector * r1.col }
