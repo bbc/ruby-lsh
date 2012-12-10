@@ -24,7 +24,7 @@ vectors.each_with_index do |vector, i|
     k += 1
   end
   $stderr.puts "Nearest neighbours up to #{k} appear in results"
-  scores << k - 1
+  scores << k
 end
 
 avg_size = 0.0
@@ -33,9 +33,9 @@ avg_size /= sizes.size
 $stderr.puts "Average number of results: #{avg_size}"
 
 p = 0.0
-scores.each { |s| p += 1 if s > 0 }
+scores.each { |s| p += 1 if s > 1 }
 p /= scores.size.to_f
-$stderr.puts "Probability of nearest neighbour being in results: #{p}"
+$stderr.puts "Probability of nearest neighbour (not self) being in results: #{p}"
 
 nn = 0.0
 scores.each { |s| nn += s }
