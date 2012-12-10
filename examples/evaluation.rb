@@ -1,10 +1,10 @@
 require_relative '../lib/lsh'
 
-index = LSH::Index.new(10, 9, Float::INFINITY, 1)
+index = LSH::Index.new(10, 8, Float::INFINITY, 1)
 
 # Test dataset
 vectors = []
-500.times { |i| vectors << index.random_vector(1000) } 
+1000.times { |i| vectors << index.random_vector(10) } 
 
 # Adding to index
 vectors.each { |v| index.add(v) }

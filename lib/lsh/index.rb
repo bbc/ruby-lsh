@@ -73,6 +73,8 @@ module LSH
     end
 
     def array_to_hash(array)
+      # Derives a 28 bit hash value from an array of integers
+      # http://stackoverflow.com/questions/2909106/python-whats-a-correct-and-good-way-to-implement-hash#2909572
       return 0 if array.size == 0
       value = (array.first << 7)
       array.each do |v|
