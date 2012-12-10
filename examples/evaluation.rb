@@ -1,6 +1,6 @@
 require_relative '../lib/lsh'
 
-index = LSH::Index.new(10, 8, Float::INFINITY, 1)
+index = LSH::Index.new(10, 8, Float::INFINITY, 50)
 
 # Test dataset
 vectors = []

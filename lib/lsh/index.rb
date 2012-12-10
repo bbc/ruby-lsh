@@ -25,20 +25,17 @@ module LSH
       end
     end
 
-    def query(vector)
-      results = {}
+    def query(vector, number_of_buckets = 1)
+      results = []
       hashes(vector).each_with_index do |hash, i|
-        if @buckets[i].has_key? hash
-          @buckets[i][hash].each do |result|
-            if results.has_key? result
-              results[result] += 1
-            else
-              results[result] = 1
-            end
-          end
+        bucket = @buckets[i]
+        sorted_keys = bucket.keys.sort { |k1, k2| (k1 - hash).abs <=> (k2 - hash).abs }
+        sorted_keys = sorted_keys.first(number_of_buckets)
+        sorted_keys.size.times.each do |k|
+          results += bucket[sorted_keys[k]]
         end
       end
-      (results.sort_by { |k, v| v }).reverse.map { |r| r[0] }
+      results.uniq
     end
 
     def hashes(vector)
@@ -75,6 +72,7 @@ module LSH
     def array_to_hash(array)
       # Derives a 28 bit hash value from an array of integers
       # http://stackoverflow.com/questions/2909106/python-whats-a-correct-and-good-way-to-implement-hash#2909572
+      # TODO: Check it works for non-binary LSH
       return 0 if array.size == 0
       value = (array.first << 7)
       array.each do |v|
