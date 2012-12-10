@@ -81,15 +81,16 @@ module LSH
     end
 
     def array_to_hash(array)
+      return array.hash
       # Derives a 28 bit hash value from an array of integers
       # http://stackoverflow.com/questions/2909106/python-whats-a-correct-and-good-way-to-implement-hash#2909572
       # TODO: Check it works for non-binary LSH
-      return 0 if array.size == 0
-      value = (array.first << 7)
-      array.each do |v|
-        value = (101 * value + v) & 0xffffff
-      end
-      value
+      #return 0 if array.size == 0
+      #value = (array.first << 7)
+      #array.each do |v|
+      #  value = (101 * value + v) & 0xffffff
+      #end
+      #value
     end
 
     def generate_projections(dim, k, l)
