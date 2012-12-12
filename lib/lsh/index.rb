@@ -33,7 +33,7 @@ module LSH
         hash_i = array_to_hash(hash)
         bucket = @buckets[i]
         # Take query hash, move it around at radius r, hash it and use the result as a query
-        results += bucket[hash_i] if bucket.has_key? hash_i
+        results += bucket[hash_i] if bucket[hash_i]
         if multiprobe_radius > 0
           (1..multiprobe_radius).to_a.each do |radius|
             (0..(@number_of_random_vectors - 1)).to_a.combination(radius).each do |flips|
@@ -46,7 +46,11 @@ module LSH
         end
       end
       results.uniq!
-      results.sort { |r1, r2| vector * r2.col <=> vector * r1.col }
+      order_vectors_by_similarity(vector, results)
+    end
+
+    def order_vectors_by_similarity(vector, vectors)
+      vectors.map { |v| [ v, vector * v.col ] } .sort_by { |v, sim| sim } .reverse .map { |vs| vs[0] }
     end
 
     def hashes(vector)

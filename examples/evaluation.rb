@@ -1,35 +1,42 @@
 require_relative '../lib/lsh'
 
-dim = 100 # Dimension
-hash_size = 10 # Hash size (in bits for binary LSH)
+dim = 20 # Dimension
+hash_size = 6 # Hash size (in bits for binary LSH)
 window_size = Float::INFINITY # Binary LSH
-n_projections = 50 # Number of independent projections
+n_projections = 5 # Number of independent projections
 multiprobe_radius = 1 # Multiprobe radius (set to 0 to disable multiprobe)
 
 index = LSH::Index.new(dim, hash_size, Float::INFINITY, n_projections)
 
 # Test dataset
 vectors = []
-100.times { |i| vectors << index.random_vector(dim) } 
+1000.times { |i| vectors << index.random_vector(dim) } 
 
 # Adding to index
 vectors.each { |v| index.add(v) }
 
 # Nearest neighbors in query result?
+bf_times = []
+lsh_times = []
 scores = []
 sizes = []
 vectors.each_with_index do |vector, i|
+  t0 = Time.now
+  similar_vectors = index.order_vectors_by_similarity(vector, vectors)
+  t1 = Time.now
   results = index.query(vector, multiprobe_radius)
+  t2 = Time.now
   sizes << results.size
-  $stderr.puts "#{results.count} results for vector #{i}"
-  similarities = vectors.map { |v| vector * v.col }
-  similarities.sort!.reverse!
+  $stderr.puts "#{results.size} results for vector #{i}"
   k = 0
-  results_similarities = results.map { |r| r * vector.col }
-  while k < results.size and results_similarities[k] == similarities[k]
+  while k < results.size and results[k] == similar_vectors[k]
     k += 1
   end
   $stderr.puts "Nearest neighbours up to #{k} appear in results"
+  $stderr.puts "Time for brute-force search: #{t1 - t0}"
+  bf_times << t1 - t0
+  $stderr.puts "Time for LSH search: #{t2 - t1}"
+  lsh_times << t2 - t1
   scores << k
 end
 
@@ -47,3 +54,13 @@ nn = 0.0
 scores.each { |s| nn += s }
 nn /= scores.size.to_f
 $stderr.puts "Average number of nearest neighbours in results: #{nn}"
+
+avg_bf_time = 0.0
+bf_times.each { |t| avg_bf_time += t }
+avg_bf_time /= bf_times.size
+$stderr.puts "Average brute-force search time: #{avg_bf_time}"
+
+avg_lsh_time = 0.0
+lsh_times.each { |t| avg_lsh_time += t }
+avg_lsh_time /= lsh_times.size
+$stderr.puts "Average LSH search time: #{avg_lsh_time}"
