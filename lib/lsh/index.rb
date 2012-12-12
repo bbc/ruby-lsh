@@ -61,11 +61,6 @@ module LSH
       hash = []
       projection.each do |random_vector|
         dot_product = vector * random_vector.col
-        if bias
-          b = @random.uniform
-        else
-          b = 0.0
-        end
         if @window == Float::INFINITY # Binary LSH
           if dot_product >= 0
             hash << 1
