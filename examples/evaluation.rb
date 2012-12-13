@@ -39,7 +39,7 @@ vectors.each_with_index do |vector, i|
   if results.size > 1
     $stderr.puts "Distance of first result: #{results[1] * vector.col}"
   end
-  $stderr.puts "Distance of first missed nearest neighour: #{similar_vectors[k] * vector.col}"
+  $stderr.puts "Distance of first missed nearest neighour: #{similar_vectors[k] * vector.col}" if k < similar_vectors.size
   $stderr.puts "Time for brute-force search: #{t1 - t0}"
   bf_times << t1 - t0
   $stderr.puts "Time for LSH search: #{t2 - t1}"
