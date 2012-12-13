@@ -35,7 +35,7 @@ vectors.each_with_index do |vector, i|
     k += 1
   end
   scores << k
-  $stderr.puts "Nearest neighbours up to #{k} appear in results"
+  $stderr.puts "Consecutive nearest neighbours up to #{k} appear in results"
   if results.size > 1
     $stderr.puts "Distance of first result: #{results[1] * vector.col}"
   end
@@ -67,7 +67,7 @@ $stderr.puts "Probability of nearest neighbour (not self) being in results: #{p}
 nn = 0.0
 scores.each { |s| nn += s }
 nn /= scores.size.to_f
-$stderr.puts "Average number of nearest neighbours in results: #{nn}"
+$stderr.puts "Average number of consecutive nearest neighbours in results: #{nn}"
 
 avg_fms = 0.0
 fms_scores.each { |s| avg_fms += s }
