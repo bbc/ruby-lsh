@@ -6,7 +6,7 @@ window_size = Float::INFINITY # Binary LSH
 n_projections = 5 # Number of independent projections
 multiprobe_radius = 1 # Multiprobe radius (set to 0 to disable multiprobe)
 
-index = LSH::Index.new(dim, hash_size, Float::INFINITY, n_projections)
+index = LSH::Index.new(dim, hash_size, window_size, n_projections)
 
 # Test dataset
 vectors = []
@@ -33,6 +33,10 @@ vectors.each_with_index do |vector, i|
     k += 1
   end
   $stderr.puts "Nearest neighbours up to #{k} appear in results"
+  if results.size > 1
+    $stderr.puts "Distance of first result: #{results[1] * vector.col}"
+  end
+  $stderr.puts "Distance of first missed nearest neighour: #{similar_vectors[k] * vector.col}"
   $stderr.puts "Time for brute-force search: #{t1 - t0}"
   bf_times << t1 - t0
   $stderr.puts "Time for LSH search: #{t2 - t1}"
