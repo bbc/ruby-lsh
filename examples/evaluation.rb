@@ -1,10 +1,10 @@
 require_relative '../lib/lsh'
 
-dim = 20 # Dimension
-hash_size = 6 # Hash size (in bits for binary LSH)
+dim = 100 # Dimension
+hash_size = 7 # Hash size (in bits for binary LSH)
 window_size = Float::INFINITY # Binary LSH
-n_projections = 5 # Number of independent projections
-multiprobe_radius = 1 # Multiprobe radius (set to 0 to disable multiprobe)
+n_projections = 150 # Number of independent projections
+multiprobe_radius = 0 # Multiprobe radius (set to 0 to disable multiprobe)
 fms_limit = 5 # Number of items to take into account in the k-NN for f-measure evaluation
 
 index = LSH::Index.new(dim, hash_size, window_size, n_projections)
