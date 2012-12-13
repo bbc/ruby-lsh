@@ -5,6 +5,7 @@ hash_size = 6 # Hash size (in bits for binary LSH)
 window_size = Float::INFINITY # Binary LSH
 n_projections = 5 # Number of independent projections
 multiprobe_radius = 1 # Multiprobe radius (set to 0 to disable multiprobe)
+fms_limit = 5 # Number of items to take into account in the k-NN for f-measure evaluation
 
 index = LSH::Index.new(dim, hash_size, window_size, n_projections)
 
@@ -20,6 +21,7 @@ bf_times = []
 lsh_times = []
 scores = []
 sizes = []
+fms_scores = []
 vectors.each_with_index do |vector, i|
   t0 = Time.now
   similar_vectors = index.order_vectors_by_similarity(vector, vectors)
@@ -32,6 +34,7 @@ vectors.each_with_index do |vector, i|
   while k < results.size and results[k] == similar_vectors[k]
     k += 1
   end
+  scores << k
   $stderr.puts "Nearest neighbours up to #{k} appear in results"
   if results.size > 1
     $stderr.puts "Distance of first result: #{results[1] * vector.col}"
@@ -41,7 +44,14 @@ vectors.each_with_index do |vector, i|
   bf_times << t1 - t0
   $stderr.puts "Time for LSH search: #{t2 - t1}"
   lsh_times << t2 - t1
-  scores << k
+  precision = 0.0
+  recall = 0.0
+  results.first(fms_limit).each { |r| (precision += 1; recall += 1) if similar_vectors.first(fms_limit).member?(r) }
+  precision /= results.first(fms_limit).size
+  recall /= similar_vectors.first(fms_limit).size
+  fms = 2 * (precision * recall) / (precision + recall)
+  $stderr.puts "F-Measure for #{fms_limit}-NN: #{fms}"
+  fms_scores << fms
 end
 
 avg_size = 0.0
@@ -58,6 +68,11 @@ nn = 0.0
 scores.each { |s| nn += s }
 nn /= scores.size.to_f
 $stderr.puts "Average number of nearest neighbours in results: #{nn}"
+
+avg_fms = 0.0
+fms_scores.each { |s| avg_fms += s }
+avg_fms /= fms_scores.size.to_f
+$stderr.puts "Average F-Measure score: #{avg_fms}"
 
 avg_bf_time = 0.0
 bf_times.each { |t| avg_bf_time += t }
