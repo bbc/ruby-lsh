@@ -3,7 +3,7 @@ require_relative '../lib/lsh'
 dim = 100 # Dimension
 hash_size = 7 # Hash size (in bits for binary LSH)
 window_size = Float::INFINITY # Binary LSH
-n_projections = 150 # Number of independent projections
+n_projections = 100 # Number of independent projections
 multiprobe_radius = 0 # Multiprobe radius (set to 0 to disable multiprobe)
 fms_limit = 5 # Number of items to take into account in the k-NN for f-measure evaluation
 
