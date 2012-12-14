@@ -14,7 +14,7 @@ Gem::Specification.new do |s|
     "lib/lsh/math_util_jblas.rb"
   ]
   if RUBY_PLATFORM == 'java'
-    s.add_dependency 'jblas'
+    s.add_dependency 'jblas-ruby'
   else
     s.add_dependency 'gsl'
   end
