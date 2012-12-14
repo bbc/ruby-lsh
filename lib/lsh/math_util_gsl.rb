@@ -21,6 +21,10 @@ module LSH
       v1 * v2.col
     end
 
+    def norm(v)
+      v.norm
+    end
+
   end
 
 end

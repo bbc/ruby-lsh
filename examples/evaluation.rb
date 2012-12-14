@@ -36,9 +36,6 @@ vectors.each_with_index do |vector, i|
   end
   scores << k
   $stderr.puts "Consecutive nearest neighbours up to #{k} appear in results"
-  if results.size > 1
-    $stderr.puts "Distance of first result: #{index.similarity(results[1], vector)}"
-  end
   $stderr.puts "Distance of first missed nearest neighour: #{index.similarity(similar_vectors[k], vector)}" if k < similar_vectors.size
   $stderr.puts "Time for brute-force search: #{t1 - t0}"
   bf_times << t1 - t0
@@ -60,9 +57,20 @@ avg_size /= sizes.size
 $stderr.puts "Average number of results: #{avg_size}"
 
 p = 0.0
+scores.each { |s| p += 1 if s > 0 }
+p /= scores.size.to_f
+$stderr.puts "Probability of nearest neighbour being in results: #{p}"
+
+p = 0.0
 scores.each { |s| p += 1 if s > 1 }
 p /= scores.size.to_f
-$stderr.puts "Probability of nearest neighbour (not self) being in results: #{p}"
+$stderr.puts "Probability of second nearest neighbour being in results: #{p}"
+
+p = 0.0
+scores.each { |s| p += 1 if s > 3 }
+p /= scores.size.to_f
+$stderr.puts "Probability of third nearest neighbour being in results: #{p}"
+
 
 nn = 0.0
 scores.each { |s| nn += s }

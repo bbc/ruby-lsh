@@ -16,6 +16,10 @@ module LSH
       (v1.t * v2)[0,0]
     end
 
+    def norm(v)
+      v.norm2
+    end
+
   end
 
 end

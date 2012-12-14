@@ -2,6 +2,8 @@ module LSH
 
   class Index
 
+    attr_reader :projections, :buckets
+
     def initialize(dim, k, w = Float::INFINITY, l = 150)
       @math = MathUtil.new
       @window = w
@@ -70,7 +72,7 @@ module LSH
             hash << 0
           end
         else
-          b = bias ? @math.uniform : 0.0
+          b = bias ? @math.random_uniform : 0.0
           hash << (b + dot_product / @window).floor
         end
       end
@@ -104,6 +106,11 @@ module LSH
         vectors << random_vector(dim)
       end
       vectors
+    end
+
+    def random_vector_unit(dim)
+      r = random_vector(dim)
+      r /= @math.norm(r)
     end
 
     def random_vector(dim)
