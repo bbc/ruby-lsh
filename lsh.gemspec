@@ -4,7 +4,7 @@ Gem::Specification.new do |s|
   s.date = "2012-12-13"
   s.summary = "Locality Sensitive Hashing gem"
   s.email = "yves.raimond@bbc.co.uk"
-  s.description = "An implementation of LSH in Ruby, using GSL"
+  s.description = "An implementation of LSH in Ruby, using JBLAS for JRuby and GSL for MRI"
   s.has_rdoc = false
   s.authors = ['Yves Raimond']
   s.files = [
