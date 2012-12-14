@@ -1,7 +1,7 @@
 ruby-lsh
 ========
 
-A first try at implementing LSH in Ruby.
+A first try at implementing LSH in Ruby. Uses JBlas on JRuby and GSL on any other Ruby.
 
 Usage
 -----
