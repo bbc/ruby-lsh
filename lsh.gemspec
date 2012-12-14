@@ -10,6 +10,8 @@ Gem::Specification.new do |s|
   s.files = [
     "lib/lsh.rb", 
     "lib/lsh/index.rb", 
+    "lib/lsh/math_util_gsl.rb",
+    "lib/lsh/math_util_jblas.rb"
   ]
   if RUBY_PLATFORM == 'java'
     s.add_dependency 'jblas'

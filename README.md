@@ -18,3 +18,8 @@ See examples/evaluation.rb
     > index.add v3 # Adding the three vectors to the index
     > index.query(v1) # Query the index for vectors that fall in the same LSH bucket as v1
     > index.query(v2, 1) # Query the index for vectors that fall in the same LSH bucket as v2, and in buckets at hamming distance 1 of that bucket
+
+Licensing terms and authorship
+------------------------------
+
+See 'COPYING' and 'AUTHORS' files.
