@@ -51,6 +51,9 @@ vectors.each_with_index do |vector, i|
   fms_scores << fms
 end
 
+$stderr.puts ''
+$stderr.puts ''
+
 avg_size = 0.0
 sizes.each { |s| avg_size += s }
 avg_size /= sizes.size
