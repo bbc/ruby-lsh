@@ -11,5 +11,9 @@ Gem::Specification.new do |s|
     "lib/lsh.rb", 
     "lib/lsh/index.rb", 
   ]
-  s.add_dependency 'gsl'
+  if RUBY_PLATFORM == 'java'
+    s.add_dependency 'jblas'
+  else
+    s.add_dependency 'gsl'
+  end
 end

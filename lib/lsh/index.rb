@@ -1,12 +1,9 @@
-require 'gsl'
-
 module LSH
 
   class Index
 
     def initialize(dim, k, w = Float::INFINITY, l = 150)
-      @random = GSL::Rng.alloc
-      @random.set(rand(1000)) # Overriding seed
+      @math = MathUtil.new
       @window = w
       @dim = dim
       @number_of_random_vectors = k
@@ -51,7 +48,7 @@ module LSH
     end
 
     def order_vectors_by_similarity(vector, vectors)
-      vectors.map { |v| [ v, vector * v.col ] } .sort_by { |v, sim| sim } .reverse .map { |vs| vs[0] }
+      vectors.map { |v| [ v, similarity(vector, v) ] } .sort_by { |v, sim| sim } .reverse .map { |vs| vs[0] }
     end
 
     def hashes(vector)
@@ -65,7 +62,7 @@ module LSH
     def hash(vector, projection, bias = true)
       hash = []
       projection.each do |random_vector|
-        dot_product = vector * random_vector.col
+        dot_product = similarity(vector, random_vector)
         if @window == Float::INFINITY # Binary LSH
           if dot_product >= 0
             hash << 1
@@ -73,7 +70,7 @@ module LSH
             hash << 0
           end
         else
-          b = bias ? @random.uniform : 0.0
+          b = bias ? @math.uniform : 0.0
           hash << (b + dot_product / @window).floor
         end
       end
@@ -110,7 +107,11 @@ module LSH
     end
 
     def random_vector(dim)
-      @random.gaussian(1, dim)
+      @math.random_gaussian_vector(dim)
+    end
+
+    def similarity(v1, v2)
+      @math.dot(v1, v2)
     end
 
   end
