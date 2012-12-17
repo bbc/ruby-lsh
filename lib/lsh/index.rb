@@ -136,6 +136,10 @@ module LSH
       MathUtil.dot(v1, v2)
     end
 
+    def inspect
+      "LSH index; dimension: #{@dim}; window size: #{@window}; #{@number_of_random_vectors} random vectors; #{@number_of_independent_projections} independent projections"
+    end
+
   end
 
 end
