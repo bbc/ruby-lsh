@@ -1,7 +1,7 @@
 require_relative '../lib/lsh'
 
 dim = 100 # Dimension
-hash_size = 7 # Hash size (in bits for binary LSH)
+hash_size = 8 # Hash size (in bits for binary LSH)
 window_size = Float::INFINITY # Binary LSH
 n_projections = 100 # Number of independent projections
 multiprobe_radius = 0 # Multiprobe radius (set to 0 to disable multiprobe)
