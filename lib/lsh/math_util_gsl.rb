@@ -20,24 +20,25 @@ module LSH
 
   class MathUtil
 
-    def initialize
-      @gsl_random = GSL::Rng.alloc
-      @gsl_random.set(rand(1000)) # Overriding seed
+    @@gsl_random = GSL::Rng.alloc
+
+    def self.random_uniform
+      @@gsl_random.uniform
     end
 
-    def random_uniform
-      @gsl_random.uniform
+    def self.random_gaussian_vector(dim)
+      @@gsl_random.gaussian(1, dim)
     end
 
-    def random_gaussian_vector(dim)
-      @gsl_random.gaussian(1, dim)
+    def self.random_gaussian_matrix(k, l)
+      GSL::Matrix.randn(k, l)
     end
 
-    def dot(v1, v2)
+    def self.dot(v1, v2)
       v1 * v2.col
     end
 
-    def norm(v)
+    def self.norm(v)
       v.norm
     end
 

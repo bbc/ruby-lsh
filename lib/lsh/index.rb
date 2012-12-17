@@ -21,7 +21,6 @@ module LSH
     attr_reader :projections, :buckets
 
     def initialize(dim, k, w = Float::INFINITY, l = 150)
-      @math = MathUtil.new
       @window = w
       @dim = dim
       @number_of_random_vectors = k
@@ -88,7 +87,7 @@ module LSH
             hash << 0
           end
         else
-          b = bias ? @math.random_uniform : 0.0
+          b = bias ? MathUtil.random_uniform : 0.0
           hash << (b + dot_product / @window).floor
         end
       end
@@ -126,15 +125,15 @@ module LSH
 
     def random_vector_unit(dim)
       r = random_vector(dim)
-      r /= @math.norm(r)
+      r /= MathUtil.norm(r)
     end
 
     def random_vector(dim)
-      @math.random_gaussian_vector(dim)
+      MathUtil.random_gaussian_vector(dim)
     end
 
     def similarity(v1, v2)
-      @math.dot(v1, v2)
+      MathUtil.dot(v1, v2)
     end
 
   end

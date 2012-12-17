@@ -20,19 +20,23 @@ module LSH
 
   class MathUtil
 
-    def random_uniform
+    def self.random_uniform
       JBLAS.rand[0,0]
     end
 
-    def random_gaussian_vector(dim)
-      JBLAS.randn(dim, 1)
+    def self.random_gaussian_vector(dim)
+      JBLAS.randn(1, dim)
     end
 
-    def dot(v1, v2)
-      (v1.t * v2)[0,0]
+    def self.random_gaussian_matrix(k, l)
+      JBLAS.randn(k, l)
     end
 
-    def norm(v)
+    def self.dot(v1, v2)
+      (v1 * v2.t)[0,0]
+    end
+
+    def self.norm(v)
       v.norm2
     end
 
