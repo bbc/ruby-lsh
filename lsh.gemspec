@@ -2,7 +2,7 @@ $platform ||= RUBY_PLATFORM[/java/] || 'ruby'
 
 Gem::Specification.new do |s|
   s.name = "lsh"
-  s.version = "0.0.4"
+  s.version = "0.0.5"
   s.date = "2012-12-17"
   s.summary = "Locality Sensitive Hashing gem"
   s.email = "yves.raimond@bbc.co.uk"
