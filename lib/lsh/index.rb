@@ -46,6 +46,7 @@ module LSH
       hashes(vector).each_with_index do |hash, i|
         hash_i = array_to_hash(hash)
         bucket = @buckets[i]
+        # Multiprobe LSH
         # Take query hash, move it around at radius r, hash it and use the result as a query
         # TODO: only works for binary LSH atm
         results += bucket[hash_i] if bucket[hash_i]
