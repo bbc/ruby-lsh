@@ -26,18 +26,40 @@ module LSH
       @number_of_random_vectors = k
       @number_of_independent_projections = l
       @projections = generate_projections(dim, k, l)
-      @buckets = []
-      l.times { |i| @buckets << {} }
+      l.times { |i| create_new_empty_bucket }
     end
+
+    #############################################
+
+    def create_new_empty_bucket
+      @buckets ||= []
+      @buckets << {}
+      @buckets.size - 1 # Returns index of newly created bucket
+    end
+
+    def add_vector_to_bucket(bucket, hash, vector)
+      if bucket.has_key? hash
+        bucket[hash] << vector
+      else
+        bucket[hash] = [vector]
+      end
+    end 
+
+    def find_bucket(i)
+      @buckets[i]
+    end
+
+    def query_bucket(bucket, hash)
+      bucket[hash]
+    end
+
+    ############################################
 
     def add(vector)
       hashes(vector).each_with_index do |hash, i|
         hash_i = array_to_hash(hash)
-        if @buckets[i].has_key? hash_i
-          @buckets[i][hash_i] << vector
-        else
-          @buckets[i][hash_i] = [vector]
-        end
+        bucket = find_bucket(i)
+        add_vector_to_bucket(bucket, hash_i, vector)
       end
     end
 
@@ -45,23 +67,25 @@ module LSH
       results = []
       hashes(vector).each_with_index do |hash, i|
         hash_i = array_to_hash(hash)
-        bucket = @buckets[i]
+        bucket = find_bucket(i)
         # Multiprobe LSH
         # Take query hash, move it around at radius r, hash it and use the result as a query
         # TODO: only works for binary LSH atm
-        results += bucket[hash_i] if bucket[hash_i]
+        bucket_results = query_bucket(bucket, hash_i)
+        results += bucket_results if bucket_results
         if multiprobe_radius > 0
           (1..multiprobe_radius).to_a.each do |radius|
             (0..(@number_of_random_vectors - 1)).to_a.combination(radius).each do |flips|
               probe = hash.clone
               flips.each { |d| probe[d] = (probe[d] == 1) ? 0 : 1  }
               probe_hash = array_to_hash(probe)
-              results += bucket[probe_hash] if bucket.has_key?(probe_hash)
+              probe_bucket_results = query_bucket(bucket, probe_hash)
+              results += probe_bucket_results if probe_bucket_results
             end
           end
         end
       end
-      results.uniq!
+      results.uniq! { |item| item.to_a }
       order_vectors_by_similarity(vector, results)
     end
 
@@ -138,7 +162,7 @@ module LSH
     end
 
     def inspect
-      "LSH index; dimension: #{@dim}; window size: #{@window}; #{@number_of_random_vectors} random vectors; #{@number_of_independent_projections} independent projections"
+      "#<LSH index; dimension: #{@dim}; window size: #{@window}; #{@number_of_random_vectors} random vectors; #{@number_of_independent_projections} independent projections>"
     end
 
   end

@@ -1,6 +1,6 @@
 require_relative '../lib/lsh'
 
-dim = 1000 # Dimension
+dim = 100 # Dimension
 random_dim = 20 # Number of actual random N(0,1) elements used to create random vector
 hash_size = 8 # Hash size (in bits for binary LSH)
 window_size = Float::INFINITY # Binary LSH
@@ -13,7 +13,7 @@ index = LSH::Index.new(dim, hash_size, window_size, n_projections)
 # Test dataset
 vectors = []
 expand_dim = LSH::MathUtil.random_gaussian_matrix(random_dim, dim)
-1000.times { |i| vectors << index.random_vector(random_dim) * expand_dim } 
+100.times { |i| vectors << index.random_vector(random_dim) * expand_dim } 
 # Adding to index
 vectors.each { |v| index.add(v) }
 

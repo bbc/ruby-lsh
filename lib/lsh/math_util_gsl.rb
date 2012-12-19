@@ -45,3 +45,22 @@ module LSH
   end
 
 end
+
+module GSL
+
+  class Vector
+
+    def to_json(*a)
+      {
+        'json_class' => self.class.name,
+        'data' => to_a,
+      }.to_json(*a)
+    end
+
+    def self.json_create(o)
+      alloc(*o['data'])
+    end
+
+  end
+
+end

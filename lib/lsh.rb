@@ -15,6 +15,7 @@
 # limitations under the License.
 
 require_relative 'lsh/index.rb'
+require_relative 'lsh/redis_index.rb'
 if RUBY_PLATFORM == 'java'
   require_relative 'lsh/math_util_jblas.rb'
 else
