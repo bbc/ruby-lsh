@@ -1,4 +1,5 @@
 require 'redis'
+require 'json'
 
 module LSH
 
@@ -8,6 +9,36 @@ module LSH
 
       def initialize(params = { :redis => { :host => '127.0.0.1', :port => 6379 } })
         @redis = Redis.new(params[:redis])
+      end
+
+      def reset!
+        @redis.flushall
+      end
+
+      def has_index?
+        projections and parameters and @redis.get "buckets" > 0
+      end
+
+      def projections=(projections)
+        @redis.set "projections", projections.to_json
+      end
+
+      def projections
+        @projections ||= JSON.parse(@redis.get "projections")
+      end
+
+      def parameters=(parms)
+        parms[:window] = 'Infinity' if parms[:window] == Float::INFINITY
+        @redis.set "parameters", parms.to_json
+      end
+
+      def parameters
+        @parms ||= (
+          parms = JSON.parse(@redis.get "parameters")
+          parms.keys.each { |k| parms[k.to_sym] = parms[k]; parms.delete(k) }
+          parms[:window] = Float::INFINITY if parms[:window] == 'Infinity'
+          parms
+        )
       end
 
       def create_new_bucket

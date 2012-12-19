@@ -4,6 +4,17 @@ module LSH
 
     class Memory
 
+      attr_accessor :projections
+      attr_accessor :parameters
+
+      def has_index?
+        projections and parameters and @buckets
+      end
+
+      def reset!
+        @buckets = nil
+      end
+
       def create_new_bucket
         @buckets ||= []
         @buckets << {}

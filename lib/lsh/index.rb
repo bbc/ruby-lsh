@@ -22,12 +22,20 @@ module LSH
 
     def initialize(dim, k, w = Float::INFINITY, l = 150, storage = LSH::Storage::Memory.new)
       @storage = storage
-      @window = w
-      @dim = dim
-      @number_of_random_vectors = k
-      @number_of_independent_projections = l
-      @projections = generate_projections(dim, k, l)
+      storage.reset!
+      storage.parameters = {
+        :dim => dim,
+        :number_of_random_vectors => k,
+        :window => w,
+        :number_of_independent_projections => l,
+      }
+      # Initializing projections and buckets
+      storage.projections = generate_projections(dim, k, l)
       l.times { |i| storage.create_new_bucket }
+    end
+
+    def self.load(storage)
+      raise "No suitable index available in #{storage}" unless storage.has_index?
     end
 
     def add(vector)
@@ -50,7 +58,7 @@ module LSH
         results += bucket_results if bucket_results
         if multiprobe_radius > 0
           (1..multiprobe_radius).to_a.each do |radius|
-            (0..(@number_of_random_vectors - 1)).to_a.combination(radius).each do |flips|
+            (0..(storage.parameters[:number_of_random_vectors] - 1)).to_a.combination(radius).each do |flips|
               probe = hash.clone
               flips.each { |d| probe[d] = (probe[d] == 1) ? 0 : 1  }
               probe_hash = array_to_hash(probe)
@@ -70,7 +78,7 @@ module LSH
 
     def hashes(vector)
       hashes = []
-      @projections.each do |projection|
+      storage.projections.each do |projection|
         hashes << hash(vector, projection)
       end
       hashes
@@ -80,7 +88,8 @@ module LSH
       hash = []
       projection.each do |random_vector|
         dot_product = similarity(vector, random_vector)
-        if @window == Float::INFINITY # Binary LSH
+        window = storage.parameters[:window]
+        if window == Float::INFINITY # Binary LSH
           if dot_product >= 0
             hash << 1
           else
@@ -88,7 +97,7 @@ module LSH
           end
         else
           b = bias ? MathUtil.random_uniform : 0.0
-          hash << (b + dot_product / @window).floor
+          hash << (b + dot_product / window).floor
         end
       end
       hash
@@ -137,7 +146,7 @@ module LSH
     end
 
     def inspect
-      "#<LSH index; dimension: #{@dim}; window size: #{@window}; #{@number_of_random_vectors} random vectors; #{@number_of_independent_projections} independent projections>"
+      "#<LSH index; dimension: #{storage.parameters.dim}; window size: #{storage.parameters.window}; #{storage.parameters.number_of_random_vectors} random vectors; #{storage.parameters.number_of_independent_projections} independent projections>"
     end
 
   end
