@@ -27,7 +27,7 @@ module LSH
       @number_of_random_vectors = k
       @number_of_independent_projections = l
       @projections = generate_projections(dim, k, l)
-      l.times { |i| storage.create_new_empty_bucket }
+      l.times { |i| storage.create_new_bucket }
     end
 
     def add(vector)

@@ -4,7 +4,7 @@ module LSH
 
     class Memory
 
-      def create_new_empty_bucket
+      def create_new_bucket
         @buckets ||= []
         @buckets << {}
         @buckets.size - 1 # Returns index of newly created bucket

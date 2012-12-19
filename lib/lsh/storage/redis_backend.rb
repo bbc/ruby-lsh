@@ -10,7 +10,7 @@ module LSH
         @redis = Redis.new(params[:redis])
       end
 
-      def create_new_empty_bucket
+      def create_new_bucket
         @redis.incr "buckets"
       end
 

@@ -19,12 +19,12 @@ require 'helper'
 class TestIndex < Test::Unit::TestCase
 
   def test_initialize_and_generate_projections
-    index = LSH::Index.new(10, 8, Float::INFINITY, 50)
+    storage = LSH::Storage::Memory.new
+    storage.expects(:create_new_bucket).times(50)
+    index = LSH::Index.new(10, 8, Float::INFINITY, 50, storage)
     projections = index.projections
     assert_equal 50, projections.size
     assert_equal 8, projections.first.size
-    buckets  = index.buckets
-    assert_equal 50, buckets.size
   end
 
   def test_binary_hash
@@ -75,7 +75,8 @@ class TestIndex < Test::Unit::TestCase
     index = LSH::Index.new(10, 8, Float::INFINITY, 1)
     v1 = index.random_vector(10)
     index.add(v1)
-    assert_equal [v1], index.buckets[0][index.array_to_hash(index.hashes(v1)[0])]
+    bucket = index.storage.find_bucket(0)
+    assert_equal [v1], index.storage.query_bucket(bucket, index.array_to_hash(index.hashes(v1)[0]))
   end
 
   def test_query
