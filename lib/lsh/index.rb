@@ -18,48 +18,23 @@ module LSH
 
   class Index
 
-    attr_reader :projections, :buckets
+    attr_reader :projections, :buckets, :storage
 
-    def initialize(dim, k, w = Float::INFINITY, l = 150)
+    def initialize(dim, k, w = Float::INFINITY, l = 150, storage = LSH::Storage::Memory.new)
+      @storage = storage
       @window = w
       @dim = dim
       @number_of_random_vectors = k
       @number_of_independent_projections = l
       @projections = generate_projections(dim, k, l)
-      l.times { |i| create_new_empty_bucket }
+      l.times { |i| storage.create_new_empty_bucket }
     end
-
-    #############################################
-
-    def create_new_empty_bucket
-      @buckets ||= []
-      @buckets << {}
-      @buckets.size - 1 # Returns index of newly created bucket
-    end
-
-    def add_vector_to_bucket(bucket, hash, vector)
-      if bucket.has_key? hash
-        bucket[hash] << vector
-      else
-        bucket[hash] = [vector]
-      end
-    end 
-
-    def find_bucket(i)
-      @buckets[i]
-    end
-
-    def query_bucket(bucket, hash)
-      bucket[hash]
-    end
-
-    ############################################
 
     def add(vector)
       hashes(vector).each_with_index do |hash, i|
         hash_i = array_to_hash(hash)
-        bucket = find_bucket(i)
-        add_vector_to_bucket(bucket, hash_i, vector)
+        bucket = storage.find_bucket(i)
+        storage.add_vector_to_bucket(bucket, hash_i, vector)
       end
     end
 
@@ -67,11 +42,11 @@ module LSH
       results = []
       hashes(vector).each_with_index do |hash, i|
         hash_i = array_to_hash(hash)
-        bucket = find_bucket(i)
+        bucket = storage.find_bucket(i)
         # Multiprobe LSH
         # Take query hash, move it around at radius r, hash it and use the result as a query
         # TODO: only works for binary LSH atm
-        bucket_results = query_bucket(bucket, hash_i)
+        bucket_results = storage.query_bucket(bucket, hash_i)
         results += bucket_results if bucket_results
         if multiprobe_radius > 0
           (1..multiprobe_radius).to_a.each do |radius|
@@ -79,7 +54,7 @@ module LSH
               probe = hash.clone
               flips.each { |d| probe[d] = (probe[d] == 1) ? 0 : 1  }
               probe_hash = array_to_hash(probe)
-              probe_bucket_results = query_bucket(bucket, probe_hash)
+              probe_bucket_results = storage.query_bucket(bucket, probe_hash)
               results += probe_bucket_results if probe_bucket_results
             end
           end

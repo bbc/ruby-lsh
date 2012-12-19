@@ -16,6 +16,8 @@
 
 require_relative 'lsh/index.rb'
 require_relative 'lsh/redis_index.rb'
+require_relative 'lsh/storage/memory.rb'
+require_relative 'lsh/storage/redis_backend.rb'
 if RUBY_PLATFORM == 'java'
   require_relative 'lsh/math_util_jblas.rb'
 else

@@ -8,7 +8,7 @@ n_projections = 50 # Number of independent projections
 multiprobe_radius = 0 # Multiprobe radius (set to 0 to disable multiprobe)
 fms_limit = 5 # Number of items to take into account in the k-NN for f-measure evaluation
 
-index = LSH::Index.new(dim, hash_size, window_size, n_projections)
+index = LSH::Index.new(dim, hash_size, window_size, n_projections, LSH::Storage::Memory.new)
 
 # Test dataset
 vectors = []
