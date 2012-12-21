@@ -15,6 +15,7 @@
 # limitations under the License.
 
 require 'gsl'
+require 'json'
 
 module LSH
 

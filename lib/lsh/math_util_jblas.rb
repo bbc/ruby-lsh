@@ -43,3 +43,24 @@ module LSH
   end
 
 end
+
+
+module JBLAS
+
+  class DoubleMatrix
+
+    def to_json(*a)
+      {
+        'json_class' => 'JBLAS::DoubleMatrix',
+        'data' => to_a,
+      }.to_json(*a)
+    end
+
+    def self.json_create(o)
+      from_array(o['data']).t
+    end
+
+  end
+
+end
+
