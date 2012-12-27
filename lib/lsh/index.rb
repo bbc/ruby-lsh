@@ -68,7 +68,7 @@ module LSH
           end
         end
       end
-      results.uniq! { |item| item.to_a }
+      results = MathUtil.uniq(results)
       order_vectors_by_similarity(vector, results)
     end
 

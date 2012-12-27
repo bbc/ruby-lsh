@@ -43,6 +43,11 @@ module LSH
       v.norm
     end
 
+    def self.uniq(vs)
+      # [ v, JSON.parse(v.to_json) ].uniq.size == 2 with GSL
+      vs.uniq { |v| v.to_a.hash }
+    end
+
   end
 
 end
