@@ -22,7 +22,7 @@ class TestIndex < Test::Unit::TestCase
     storage = LSH::Storage::Memory.new
     storage.expects(:create_new_bucket).times(50)
     index = LSH::Index.new(10, 8, Float::INFINITY, 50, storage)
-    projections = index.projections
+    projections = index.storage.projections
     assert_equal 50, projections.size
     assert_equal 8, projections.first.size
   end
@@ -35,7 +35,7 @@ class TestIndex < Test::Unit::TestCase
     assert_equal 8, hashes.first.size # Each hash has 8 components
     hashes.first.each { |h| assert (h == 0 or h == 1) } # Float::INFINITY => binary LSH
     # Testing the first hash element
-    if index.similarity(v1, index.projections.first.first) >= 0
+    if index.similarity(v1, index.storage.projections.first.first) >= 0
       assert_equal 1, hashes.first.first
     else
       assert_equal 0, hashes.first.first
@@ -50,7 +50,7 @@ class TestIndex < Test::Unit::TestCase
     assert_equal 8, hashes.first.size # Each hash has 8 components
     hashes.first.each { |h| assert h.class == Fixnum } # Continuous LSH
     # Testing the first hash element
-    first_hash_value = (index.similarity(v1, index.projections.first.first) / 10).floor
+    first_hash_value = (index.similarity(v1, index.storage.projections.first.first) / 10).floor
     assert (hashes.first.first == first_hash_value or hashes.first.first == first_hash_value + 1)
   end
 
