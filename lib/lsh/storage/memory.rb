@@ -18,9 +18,7 @@ module LSH
 
       def create_new_bucket
         @buckets ||= []
-        bucket = {}
-        @buckets << bucket
-        bucket
+        @buckets << {}
       end
 
       def add_vector_to_bucket(bucket, hash, vector)

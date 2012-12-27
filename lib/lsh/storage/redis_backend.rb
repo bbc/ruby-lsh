@@ -7,6 +7,8 @@ module LSH
 
     class RedisBackend
 
+      attr_reader :redis
+
       def initialize(params = { :redis => { :host => '127.0.0.1', :port => 6379 } })
         @redis = Redis.new(params[:redis])
       end
@@ -16,7 +18,7 @@ module LSH
       end
 
       def has_index?
-        projections and parameters and @redis.get "buckets" > 0
+        projections and parameters and @redis.get("buckets") > 0
       end
 
       def projections=(projections)
@@ -24,7 +26,11 @@ module LSH
       end
 
       def projections
-        @projections ||= JSON.parse(@redis.get "projections")
+        begin
+          @projections ||= JSON.parse(@redis.get "projections")
+        rescue TypeError
+          nil
+        end
       end
 
       def parameters=(parms)
