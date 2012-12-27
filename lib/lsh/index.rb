@@ -20,22 +20,22 @@ module LSH
 
     attr_reader :projections, :buckets, :storage
 
-    def initialize(dim, k, w = Float::INFINITY, l = 150, storage = LSH::Storage::Memory.new)
+    def initialize(parameters = {}, storage = LSH::Storage::Memory.new)
       @storage = storage
-      storage.reset!
-      storage.parameters = {
-        :dim => dim,
-        :number_of_random_vectors => k,
-        :window => w,
-        :number_of_independent_projections => l,
-      }
-      # Initializing projections and buckets
-      storage.projections = generate_projections(dim, k, l)
-      l.times { |i| storage.create_new_bucket }
+      unless storage.has_index?
+        storage.parameters = parameters
+        # Initializing projections and buckets
+        storage.projections = generate_projections(
+          parameters[:dim], 
+          parameters[:number_of_random_vectors], 
+          parameters[:number_of_independent_projections]
+        )
+        parameters[:number_of_independent_projections].times { |i| storage.create_new_bucket }
+      end
     end
 
     def self.load(storage)
-      raise "No suitable index available in #{storage}" unless storage.has_index?
+      Index.new(storage.parameters, storage) if storage.has_index? 
     end
 
     def add(vector)

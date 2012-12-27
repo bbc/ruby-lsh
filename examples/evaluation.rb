@@ -7,8 +7,15 @@ window_size = Float::INFINITY # Binary LSH
 n_projections = 50 # Number of independent projections
 multiprobe_radius = 0 # Multiprobe radius (set to 0 to disable multiprobe)
 fms_limit = 5 # Number of items to take into account in the k-NN for f-measure evaluation
+storage = LSH::Storage::RedisBackend.new # Redis backend
 
-index = LSH::Index.new(dim, hash_size, window_size, n_projections, LSH::Storage::RedisBackend.new)
+storage.reset!
+index = LSH::Index.new({ 
+  :dim => dim, 
+  :number_of_random_vectors => hash_size, 
+  :window => window_size, 
+  :number_of_independent_projections => n_projections
+}, storage)
 
 # Test dataset
 vectors = []

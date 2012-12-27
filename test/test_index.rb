@@ -18,20 +18,42 @@ require 'helper'
 
 class TestIndex < Test::Unit::TestCase
 
+  def setup
+    @parameters = {
+      :dim => 10,
+      :number_of_random_vectors => 8,
+      :window => Float::INFINITY,
+      :number_of_independent_projections => 50,
+    }
+  end
+
   def test_initialize_and_generate_projections
     storage = LSH::Storage::Memory.new
     storage.expects(:create_new_bucket).times(50)
-    index = LSH::Index.new(10, 8, Float::INFINITY, 50, storage)
+    index = LSH::Index.new(@parameters, storage)
+    assert_equal 10, storage.parameters[:dim] 
+    assert_equal 8, storage.parameters[:number_of_random_vectors]
+    assert_equal Float::INFINITY, storage.parameters[:window]
+    assert_equal 50, storage.parameters[:number_of_independent_projections] 
     projections = index.storage.projections
     assert_equal 50, projections.size
     assert_equal 8, projections.first.size
   end
 
+  def test_load
+    storage = LSH::Storage::Memory.new
+    storage.expects(:has_index?).at_least(1).returns(false)
+    assert_equal nil, LSH::Index.load(storage)
+    storage.expects(:has_index?).at_least(1).returns(true)
+    storage.expects(:parameters).returns({})
+    assert_equal storage, LSH::Index.load(storage).storage
+  end
+
   def test_binary_hash
-    index = LSH::Index.new(10, 8, Float::INFINITY, 2)
+    index = LSH::Index.new(@parameters)
     v1 = index.random_vector(10)
     hashes = index.hashes(v1)
-    assert_equal 2, hashes.size # One hash per projection
+    assert_equal 50, hashes.size # One hash per projection
     assert_equal 8, hashes.first.size # Each hash has 8 components
     hashes.first.each { |h| assert (h == 0 or h == 1) } # Float::INFINITY => binary LSH
     # Testing the first hash element
@@ -43,10 +65,10 @@ class TestIndex < Test::Unit::TestCase
   end
 
   def test_integer_hash
-    index = LSH::Index.new(10, 8, 10, 2)
+    index = LSH::Index.new(@parameters)
     v1 = index.random_vector(10)
     hashes = index.hashes(v1)
-    assert_equal 2, hashes.size # One hash per projection
+    assert_equal 50, hashes.size # One hash per projection
     assert_equal 8, hashes.first.size # Each hash has 8 components
     hashes.first.each { |h| assert h.class == Fixnum } # Continuous LSH
     # Testing the first hash element
@@ -55,7 +77,7 @@ class TestIndex < Test::Unit::TestCase
   end
 
   def test_order_vectors_by_similarity
-    index = LSH::Index.new(10, 8, Float::INFINITY, 2)
+    index = LSH::Index.new(@parameters)
     100.times do |i|
       v1 = index.random_vector(10)
       v2 = index.random_vector(10)
@@ -72,7 +94,7 @@ class TestIndex < Test::Unit::TestCase
   end
 
   def test_add
-    index = LSH::Index.new(10, 8, Float::INFINITY, 1)
+    index = LSH::Index.new(@parameters)
     v1 = index.random_vector(10)
     index.add(v1)
     bucket = index.storage.find_bucket(0)
@@ -80,7 +102,7 @@ class TestIndex < Test::Unit::TestCase
   end
 
   def test_query
-    index = LSH::Index.new(10, 8, Float::INFINITY, 1)
+    index = LSH::Index.new(@parameters)
     100.times do |i|
       v1 = index.random_vector_unit(10) # If not normed, there's no warranty another vector won't be more similar to v1 than itself
       index.add(v1)
