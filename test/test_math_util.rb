@@ -38,4 +38,9 @@ class MathUtilTest < Test::Unit::TestCase
     assert_equal 1.0, LSH::MathUtil.norm(v / LSH::MathUtil.norm(v)).round(4)
   end
 
+  def test_json
+    v = LSH::MathUtil.random_gaussian_vector(10)
+    assert_equal v, JSON.parse(v.to_json)
+  end
+
 end
