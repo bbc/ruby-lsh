@@ -44,8 +44,11 @@ module LSH
     end
 
     def self.uniq(vs)
+      # Can't use uniq as
       # [ v, JSON.parse(v.to_json) ].uniq.size == 2 with GSL
-      vs.uniq { |v| v.to_a.hash }
+      results = []
+      vs.each { |v| results << v unless results.member? v }
+      results
     end
 
   end
