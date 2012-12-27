@@ -6,6 +6,7 @@ module LSH
 
       attr_accessor :projections
       attr_accessor :parameters
+      attr_reader   :buckets
 
       def has_index?
         projections and parameters and @buckets
@@ -17,8 +18,9 @@ module LSH
 
       def create_new_bucket
         @buckets ||= []
-        @buckets << {}
-        @buckets.size - 1 # Returns index of newly created bucket
+        bucket = {}
+        @buckets << bucket
+        bucket
       end
 
       def add_vector_to_bucket(bucket, hash, vector)
