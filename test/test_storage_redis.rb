@@ -21,7 +21,7 @@ class TestStorageRedis < Test::Unit::TestCase
   def setup
     @redis = MockRedis.new
     Redis.expects(:new).returns(@redis)
-    @storage = LSH::Storage::RedisBackend.new
+    @storage = LSH::Storage::RedisBackend.new(:data_dir => '/tmp')
     @parameters = {
       :dim => 10,
       :number_of_random_vectors => 8,

@@ -72,7 +72,7 @@ module LSH
 
       def add_vector_to_bucket(bucket, hash, vector)
         vector.save(File.join(@data_dir, vector.hash.to_s+'.dat')) # Writing vector to disk
-        @redis.sadd "#{bucket}:#{hash}", vector.hash # Only storing vector's hash in Redis
+        @redis.sadd "#{bucket}:#{hash}", vector.hash.to_s # Only storing vector's hash in Redis
       end
 
       def find_bucket(i)
