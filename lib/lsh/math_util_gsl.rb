@@ -70,6 +70,10 @@ module GSL
       alloc(*o['data'])
     end
 
+    def hash
+      to_a.hash
+    end
+
   end
 
 end

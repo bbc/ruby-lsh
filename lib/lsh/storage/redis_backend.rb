@@ -25,12 +25,15 @@ module LSH
 
       attr_reader :redis
 
-      def initialize(params = { :redis => { :host => '127.0.0.1', :port => 6379 } })
+      def initialize(params = { :redis => { :host => '127.0.0.1', :port => 6379 }, :data_dir => 'data' })
         @redis = Redis.new(params[:redis])
+        @data_dir = params[:data_dir]
+        Dir.mkdir(@data_dir) unless File.exists?(@data_dir)
       end
 
       def reset!
         @redis.flushall
+        Dir.foreach(@data_dir) {|f| File.delete(File.join(@data_dir, f)) if f != '.' and f != '..' and f.end_with?('.json')}
       end
 
       def has_index?
@@ -68,7 +71,8 @@ module LSH
       end
 
       def add_vector_to_bucket(bucket, hash, vector)
-        @redis.sadd "#{bucket}:#{hash}", vector.to_json
+        File.open(File.join(@data_dir, vector.hash.to_s+'.json'), 'w') { |f| f.write(vector.to_json) } # Writing vector to disk, in json
+        @redis.sadd "#{bucket}:#{hash}", vector.hash # Only storing vector's hash in Redis
       end
 
       def find_bucket(i)
@@ -76,7 +80,11 @@ module LSH
       end
 
       def query_bucket(bucket, hash)
-        @redis.smembers("#{bucket}:#{hash}").map { |vector_json| JSON.parse(vector_json) }
+        results = []
+        @redis.smembers("#{bucket}:#{hash}").map do |vector_hash|
+          results << JSON.load(File.open(File.join(@data_dir, vector_hash+'.json'), 'r'))
+        end
+        results
       end
 
     end
