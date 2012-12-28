@@ -32,6 +32,10 @@ module LSH
       JBLAS.randn(k, l)
     end
 
+    def self.zeros(dim)
+      JBLAS::DoubleMatrix.new(1, dim)
+    end
+
     def self.dot(v1, v2)
       (v1 * v2.t)[0,0]
     end

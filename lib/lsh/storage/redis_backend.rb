@@ -33,7 +33,7 @@ module LSH
 
       def reset!
         @redis.flushall
-        Dir.foreach(@data_dir) {|f| File.delete(File.join(@data_dir, f)) if f != '.' and f != '..' and f.end_with?('.json')}
+        Dir.foreach(@data_dir) {|f| File.delete(File.join(@data_dir, f)) if f != '.' and f != '..' and f.end_with?('.dat')}
       end
 
       def has_index?
@@ -71,7 +71,7 @@ module LSH
       end
 
       def add_vector_to_bucket(bucket, hash, vector)
-        File.open(File.join(@data_dir, vector.hash.to_s+'.json'), 'w') { |f| f.write(vector.to_json) } # Writing vector to disk, in json
+        vector.save(File.join(@data_dir, vector.hash.to_s+'.dat')) # Writing vector to disk
         @redis.sadd "#{bucket}:#{hash}", vector.hash # Only storing vector's hash in Redis
       end
 
@@ -82,7 +82,9 @@ module LSH
       def query_bucket(bucket, hash)
         results = []
         @redis.smembers("#{bucket}:#{hash}").map do |vector_hash|
-          results << JSON.load(File.open(File.join(@data_dir, vector_hash+'.json'), 'r'))
+          vector = MathUtil.zeros(parameters[:dim])
+          vector.load(File.join(@data_dir, vector_hash+'.dat'))
+          results << vector
         end
         results
       end

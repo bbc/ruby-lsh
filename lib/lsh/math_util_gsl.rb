@@ -31,6 +31,10 @@ module LSH
       @@gsl_random.gaussian(1, dim)
     end
 
+    def self.zeros(dim)
+      GSL::Vector.alloc(dim)
+    end
+
     def self.random_gaussian_matrix(k, l)
       GSL::Matrix.randn(k, l)
     end
@@ -74,6 +78,13 @@ module GSL
       to_a.hash
     end
 
+    def save(file)
+      fwrite(file)
+    end
+
+    def load(file)
+      fread(file)
+    end
   end
 
 end
