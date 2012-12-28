@@ -48,4 +48,9 @@ class MathUtilTest < Test::Unit::TestCase
     assert_equal 1, LSH::MathUtil.uniq([v, JSON.parse(v.to_json)]).size
   end
 
+  def test_hash
+    v = LSH::MathUtil.random_gaussian_vector(10)
+    assert_equal v.hash, JSON.parse(v.to_json).hash
+  end
+
 end
