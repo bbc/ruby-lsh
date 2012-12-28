@@ -23,7 +23,7 @@ module LSH
 
     class RedisBackend
 
-      attr_reader :redis
+      attr_reader :redis, :data_dir
 
       def initialize(params = { :redis => { :host => '127.0.0.1', :port => 6379 }, :data_dir => 'data' })
         @redis = Redis.new(params[:redis])
@@ -37,7 +37,11 @@ module LSH
       end
 
       def has_index?
-        projections and parameters and @redis.get("buckets") > 0
+        projections and parameters and number_of_buckets > 0
+      end
+
+      def number_of_buckets
+        @redis.get("buckets") || 0
       end
 
       def projections=(projections)

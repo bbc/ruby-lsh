@@ -40,6 +40,16 @@ class TestStorageRedis < Test::Unit::TestCase
     assert (@storage.has_index?)
   end
 
+  def test_reset
+    index = LSH::Index.new(@parameters, @storage)
+    v = index.random_vector(10)
+    @storage.add_vector_to_bucket(@storage.find_bucket(0), 'hash', v)
+    assert (@storage.has_index?)
+    @storage.reset!
+    assert (not @storage.has_index?)
+    Dir.foreach(@storage.data_dir) { |f| assert (not f.end_with?('.dat')) }
+  end
+
   def test_projections
     assert_equal nil, @storage.projections
     index = LSH::Index.new(@parameters, @storage)
@@ -97,6 +107,10 @@ class MockRedis
 
   def smembers(key)
     @data[key]
+  end
+
+  def flushall
+    @data = {}
   end
 
 end
