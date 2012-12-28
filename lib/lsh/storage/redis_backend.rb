@@ -45,6 +45,7 @@ module LSH
       end
 
       def projections=(projections)
+        # TODO - too slow for high-dimensional indexes
         @redis.set "projections", projections.to_json
       end
 
