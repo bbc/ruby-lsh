@@ -9,7 +9,12 @@ Usage
 See examples/evaluation.rb
 
     > require 'lsh'
-    > index = LSH::Index.new(100, 8, Float::Infinity, 150) # Creates a binary LSH index for 100-dim vectors, 8 bits, 150 independent projections
+    > index = LSH::Index.new({
+        :dim => 100, 
+        :number_of_random_vectors => 8, 
+        :window => Float::Infinity, 
+        :number_of_independent_projections => 150
+      }) # Creates an in-memory binary LSH index for 100-dim vectors, 8 bits, 150 independent projections
     > v1 = index.random_vector(100)
     > v2 = index.random_vector(100)
     > v3 = index.random_vector(100) # Creating three random vectors
