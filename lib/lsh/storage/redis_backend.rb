@@ -28,16 +28,24 @@ module LSH
       def initialize(params = { :redis => { :host => '127.0.0.1', :port => 6379 }, :data_dir => 'data' })
         @redis = Redis.new(params[:redis])
         @data_dir = params[:data_dir]
-        Dir.mkdir(@data_dir) unless File.exists?(@data_dir)
+        unless File.exists?(@data_dir)
+          Dir.mkdir(@data_dir)
+          Dir.mkdir(File.join(@data_dir, 'projections'))
+        end
       end
 
       def reset!
         @redis.flushall
-        Dir.foreach(@data_dir) {|f| File.delete(File.join(@data_dir, f)) if f != '.' and f != '..' and f.end_with?('.dat')}
+        delete_dat_files_in_dir(@data_dir)
+        delete_dat_files_in_dir(File.join(@data_dir, 'projections'))
+      end
+
+      def delete_dat_files_in_dir(dir)
+        Dir.foreach(dir) {|f| File.delete(File.join(dir, f)) if f != '.' and f != '..' and f.end_with?('.dat')}
       end
 
       def has_index?
-        projections and parameters and number_of_buckets > 0
+        parameters and projections and number_of_buckets > 0
       end
 
       def number_of_buckets
@@ -45,16 +53,30 @@ module LSH
       end
 
       def projections=(projections)
-        # TODO - too slow for high-dimensional indexes
-        @redis.set "projections", projections.to_json
+        # Saving the projections to disk
+        # (too slow to serialize and store in Redis for
+        # large number of dimensions/projections)
+        projections.each_with_index do |projection, i|
+          projection.each_with_index do |vector, j|
+            vector.save(File.join(@data_dir, 'projections', "vector_#{i}_#{j}.dat"))
+          end
+        end
       end
 
       def projections
-        begin
-          @projections ||= JSON.parse(@redis.get "projections")
-        rescue TypeError
-          nil
-        end
+        @projections ||= (
+          projections = []
+          parameters[:number_of_independent_projections].times do |i|
+            vectors = []
+            parameters[:number_of_random_vectors].times do |j|
+              v = MathUtil.zeros(parameters[:dim])
+              v.load(File.join(@data_dir, 'projections', "vector_#{i}_#{j}.dat"))
+              vectors << v
+            end
+            projections << vectors
+          end
+          projections
+        )
       end
 
       def parameters=(parms)
@@ -63,12 +85,16 @@ module LSH
       end
 
       def parameters
-        @parms ||= (
-          parms = JSON.parse(@redis.get "parameters")
-          parms.keys.each { |k| parms[k.to_sym] = parms[k]; parms.delete(k) }
-          parms[:window] = Float::INFINITY if parms[:window] == 'Infinity'
-          parms
-        )
+        begin
+          @parms ||= (
+            parms = JSON.parse(@redis.get "parameters")
+            parms.keys.each { |k| parms[k.to_sym] = parms[k]; parms.delete(k) }
+            parms[:window] = Float::INFINITY if parms[:window] == 'Infinity'
+            parms
+          )
+        rescue TypeError
+          nil
+        end 
       end
 
       def create_new_bucket
