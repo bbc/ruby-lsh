@@ -44,7 +44,7 @@ Once created, the index can then be reused:
     storage = LSH::Storage::RedisBackend.new
     index = LSH::Index.new(storage.parameters, storage) if storage.has_index?
 
-This will connect to a Redis backend on localhost and store binary dumps of the vectors in a 'data' directory.
+This will connect to a Redis backend on localhost and store binary dumps of the vectors (including the projections) in a 'data' directory.
 This can be overridden as follow:
 
     storage = LSH::Storage::RedisBackend.new(:redis => { :host => '127.0.0.1', :port => 6379 }, :data_dir => 'data')
