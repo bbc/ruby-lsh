@@ -117,6 +117,8 @@ module LSH
           bucket = find_bucket(i)
           vector_hashes += @redis.smembers("#{bucket}:#{hash}")
         end
+        # Making sure we don't load the same vectors twice if they match
+        # in different random projections
         vector_hashes.uniq!
         results = []
         vector_hashes.each do |vector_hash|
