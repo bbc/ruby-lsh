@@ -15,13 +15,14 @@
 # limitations under the License.
 
 require 'helper'
+require 'tmpdir'
 
 class TestStorageRedis < Test::Unit::TestCase
 
   def setup
     @redis = MockRedis.new
     Redis.expects(:new).returns(@redis)
-    @storage = LSH::Storage::RedisBackend.new(:data_dir => '/tmp/ruby-lsh-test-data')
+    @storage = LSH::Storage::RedisBackend.new(:data_dir => File.join(Dir.tmpdir, 'ruby-lsh-test-data'))
     @parameters = {
       :dim => 10,
       :number_of_random_vectors => 8,
@@ -32,8 +33,8 @@ class TestStorageRedis < Test::Unit::TestCase
 
   def test_initialize
     assert_equal @redis, @storage.redis
-    assert File.exists? '/tmp/ruby-lsh-test-data'
-    assert File.exists? '/tmp/ruby-lsh-test-data/projections'
+    assert File.exists? File.join(Dir.tmpdir, 'ruby-lsh-test-data')
+    assert File.exists? File.join(Dir.tmpdir, 'ruby-lsh-test-data', 'projections')
   end
 
   def test_has_index
@@ -57,6 +58,9 @@ class TestStorageRedis < Test::Unit::TestCase
     assert_equal nil, @storage.projections
     index = LSH::Index.new(@parameters, @storage)
     assert_equal 50, @storage.projections.size
+    v = index.random_vector(10)
+    v.load(File.join(Dir.tmpdir, 'ruby-lsh-test-data', 'projections', 'vector_2_3.dat'))
+    assert_equal v, @storage.projections[2][3]
   end
 
   def test_parameters
