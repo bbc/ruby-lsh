@@ -49,7 +49,7 @@ module LSH
       end
 
       def number_of_buckets
-        @redis.get("buckets") || 0
+        @redis.get("buckets").to_i || 0
       end
 
       def projections=(projections)
