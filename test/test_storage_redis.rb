@@ -21,7 +21,7 @@ class TestStorageRedis < Test::Unit::TestCase
   def setup
     @redis = MockRedis.new
     Redis.expects(:new).returns(@redis)
-    @storage = LSH::Storage::RedisBackend.new(:data_dir => '/tmp')
+    @storage = LSH::Storage::RedisBackend.new(:data_dir => '/tmp/ruby-lsh-test-data')
     @parameters = {
       :dim => 10,
       :number_of_random_vectors => 8,
@@ -32,6 +32,8 @@ class TestStorageRedis < Test::Unit::TestCase
 
   def test_initialize
     assert_equal @redis, @storage.redis
+    assert File.exists? '/tmp/ruby-lsh-test-data'
+    assert File.exists? '/tmp/ruby-lsh-test-data/projections'
   end
 
   def test_has_index
@@ -47,7 +49,8 @@ class TestStorageRedis < Test::Unit::TestCase
     assert (@storage.has_index?)
     @storage.reset!
     assert (not @storage.has_index?)
-    Dir.foreach(@storage.data_dir) { |f| assert (not f.end_with?('.dat')) }
+    Dir.foreach(@storage.data_dir) { |f| assert (not f.end_with?('.dat')) } # No vectors
+    Dir.foreach(File.join(@storage.data_dir, 'projections')) { |f| assert (not f.end_with?('.dat')) } # And no projections
   end
 
   def test_projections

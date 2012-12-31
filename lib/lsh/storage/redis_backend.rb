@@ -64,6 +64,7 @@ module LSH
       end
 
       def projections
+        return unless parameters
         @projections ||= (
           projections = []
           parameters[:number_of_independent_projections].times do |i|
