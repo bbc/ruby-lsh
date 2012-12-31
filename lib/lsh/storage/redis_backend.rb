@@ -111,9 +111,15 @@ module LSH
         "bucket:#{i}" if @redis.get("buckets").to_i > i
       end
 
-      def query_bucket(bucket, hash)
+      def query_buckets(hashes)
+        vector_hashes = []
+        hashes.each_with_index do |hash, i|
+          bucket = find_bucket(i)
+          vector_hashes += @redis.smembers("#{bucket}:#{hash}")
+        end
+        vector_hashes.uniq!
         results = []
-        @redis.smembers("#{bucket}:#{hash}").map do |vector_hash|
+        vector_hashes.each do |vector_hash|
           vector = MathUtil.zeros(parameters[:dim])
           vector.load(File.join(@data_dir, vector_hash+'.dat'))
           results << vector

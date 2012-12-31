@@ -47,29 +47,33 @@ module LSH
     end
 
     def query(vector, multiprobe_radius = 0)
-      results = []
-      hashes(vector).each_with_index do |hash, i|
-        hash_i = array_to_hash(hash)
-        bucket = storage.find_bucket(i)
-        # Multiprobe LSH
-        # Take query hash, move it around at radius r, hash it and use the result as a query
-        # TODO: only works for binary LSH atm
-        bucket_results = storage.query_bucket(bucket, hash_i)
-        results += bucket_results if bucket_results
-        if multiprobe_radius > 0
-          (1..multiprobe_radius).to_a.each do |radius|
-            (0..(storage.parameters[:number_of_random_vectors] - 1)).to_a.combination(radius).each do |flips|
-              probe = hash.clone
-              flips.each { |d| probe[d] = (probe[d] == 1) ? 0 : 1  }
-              probe_hash = array_to_hash(probe)
-              probe_bucket_results = storage.query_bucket(bucket, probe_hash)
-              results += probe_bucket_results if probe_bucket_results
-            end
-          end
+      hash_arrays = hashes(vector)
+      hashes = hash_arrays.map { |a| array_to_hash(a) }
+      results = storage.query_buckets(hashes)
+      # Multiprobe LSH
+      # Take query hashes, move them around at radius r, and use them to do another query
+      # TODO: only works for binary LSH atm
+      if multiprobe_radius > 0
+        mp_arrays = multiprobe_hashes_arrays(hash_arrays, multiprobe_radius)
+        mp_arrays.each do |probes_arrays|
+          probes_hashes = probes_arrays.map { |a| array_to_hash(a) }
+          results += storage.query_buckets(probes_hashes)
         end
       end
       results = MathUtil.uniq(results)
       order_vectors_by_similarity(vector, results)
+    end
+
+    def multiprobe_hashes_arrays(hash_arrays, multiprobe_radius)
+      mp_arrays = []
+      (1..multiprobe_radius).to_a.each do |radius|
+        (0..(storage.parameters[:number_of_random_vectors] - 1)).to_a.combination(radius).each do |flips|
+          probes = Marshal.load(Marshal.dump(hash_arrays))
+          probes.each { |probe| flips.each { |d| probe[d] = (probe[d] == 1) ? 0 : 1 } }
+          mp_arrays << probes
+        end
+      end
+      mp_arrays
     end
 
     def order_vectors_by_similarity(vector, vectors)

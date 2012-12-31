@@ -49,8 +49,14 @@ module LSH
         @buckets[i]
       end
 
-      def query_bucket(bucket, hash)
-        bucket[hash]
+      def query_buckets(hashes)
+        results = []
+        hashes.each_with_index do |hash, i|
+          bucket = find_bucket(i)
+          in_bucket = bucket[hash]
+          results += in_bucket if in_bucket
+        end
+        results
       end
 
     end

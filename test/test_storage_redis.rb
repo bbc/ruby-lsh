@@ -84,7 +84,7 @@ class TestStorageRedis < Test::Unit::TestCase
     index = LSH::Index.new(@parameters, @storage)
     v = index.random_vector(10)
     @storage.add_vector_to_bucket(@storage.find_bucket(0), 'hash', v)
-    assert_equal [v], @storage.query_bucket(@storage.find_bucket(0), 'hash')
+    assert_equal [v], @storage.query_buckets(['hash'])
   end
 
 end
