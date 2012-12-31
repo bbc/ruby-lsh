@@ -64,6 +64,7 @@ class TestStorageRedis < Test::Unit::TestCase
   end
 
   def test_parameters
+    assert_equal nil, @storage.parameters
     index = LSH::Index.new(@parameters, @storage)
     assert_equal Float::INFINITY, @storage.parameters[:window]
     assert_equal 10, @storage.parameters[:dim]
