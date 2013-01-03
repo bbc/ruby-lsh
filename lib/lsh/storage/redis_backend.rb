@@ -35,8 +35,18 @@ module LSH
       end
 
       def reset!
-        @redis.flushall
+        clear_data!
+        clear_projections!
+      end
+
+      def clear_data!
+        @redis.del(@redis.keys("lsh:bucket:*"))
         delete_dat_files_in_dir(@data_dir)
+      end
+
+      def clear_projections!
+        @redis.del("lsh:parameters")
+        @redis.del("lsh:buckets")
         delete_dat_files_in_dir(File.join(@data_dir, 'projections'))
       end
 
@@ -49,7 +59,7 @@ module LSH
       end
 
       def number_of_buckets
-        @redis.get("buckets").to_i || 0
+        @redis.get("lsh:buckets").to_i || 0
       end
 
       def projections=(projections)
@@ -82,13 +92,13 @@ module LSH
 
       def parameters=(parms)
         parms[:window] = 'Infinity' if parms[:window] == Float::INFINITY
-        @redis.set "parameters", parms.to_json
+        @redis.set "lsh:parameters", parms.to_json
       end
 
       def parameters
         begin
           @parms ||= (
-            parms = JSON.parse(@redis.get "parameters")
+            parms = JSON.parse(@redis.get "lsh:parameters")
             parms.keys.each { |k| parms[k.to_sym] = parms[k]; parms.delete(k) }
             parms[:window] = Float::INFINITY if parms[:window] == 'Infinity'
             parms
@@ -99,7 +109,7 @@ module LSH
       end
 
       def create_new_bucket
-        @redis.incr "buckets"
+        @redis.incr "lsh:buckets"
       end
 
       def add_vector_to_bucket(bucket, hash, vector)
@@ -108,14 +118,15 @@ module LSH
       end
 
       def find_bucket(i)
-        "bucket:#{i}" if @redis.get("buckets").to_i > i
+        "lsh:bucket:#{i}"
       end
 
       def query_buckets(hashes)
         vector_hashes = []
         hashes.each_with_index do |hash, i|
           bucket = find_bucket(i)
-          vector_hashes += @redis.smembers("#{bucket}:#{hash}")
+          results = @redis.smembers("#{bucket}:#{hash}")
+          vector_hashes += results if results
         end
         # Making sure we don't load the same vectors twice if they match
         # in different random projections

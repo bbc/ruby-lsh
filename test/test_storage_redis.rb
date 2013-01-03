@@ -27,7 +27,7 @@ class TestStorageRedis < Test::Unit::TestCase
       :dim => 10,
       :number_of_random_vectors => 8,
       :window => Float::INFINITY,
-      :number_of_independent_projections => 50,
+      :number_of_independent_projections => 5,
     }
   end
 
@@ -54,10 +54,28 @@ class TestStorageRedis < Test::Unit::TestCase
     Dir.foreach(File.join(@storage.data_dir, 'projections')) { |f| assert (not f.end_with?('.dat')) } # And no projections
   end
 
+  def test_clear_data
+    index = LSH::Index.new(@parameters, @storage)
+    v = index.random_vector(10)
+    @storage.add_vector_to_bucket(@storage.find_bucket(0), 'hash', v)
+    @storage.clear_data!
+    assert @storage.has_index? # Storage still has an index
+    assert @storage.query_buckets(['hash']).empty? # But no data anymore
+    Dir.foreach(@storage.data_dir) { |f| assert (not f.end_with?('.dat')) } # No vectors
+  end
+
+  def test_clear_projections
+    index = LSH::Index.new(@parameters, @storage)
+    assert @storage.has_index?
+    @storage.clear_projections!
+    assert (not @storage.has_index?)
+    Dir.foreach(File.join(@storage.data_dir, 'projections')) { |f| assert (not f.end_with?('.dat')) } # And no projections
+  end
+
   def test_projections
     assert_equal nil, @storage.projections
     index = LSH::Index.new(@parameters, @storage)
-    assert_equal 50, @storage.projections.size
+    assert_equal 5, @storage.projections.size
     v = index.random_vector(10)
     v.load(File.join(Dir.tmpdir, 'ruby-lsh-test-data', 'projections', 'vector_2_3.dat'))
     assert_equal v, @storage.projections[2][3]
@@ -69,15 +87,15 @@ class TestStorageRedis < Test::Unit::TestCase
     assert_equal Float::INFINITY, @storage.parameters[:window]
     assert_equal 10, @storage.parameters[:dim]
     assert_equal 8, @storage.parameters[:number_of_random_vectors]
-    assert_equal 50, @storage.parameters[:number_of_independent_projections]
+    assert_equal 5, @storage.parameters[:number_of_independent_projections]
   end
 
   def test_create_new_bucket
-    assert_equal nil, @redis.get("buckets")
+    assert_equal nil, @redis.get("lsh:buckets")
     @storage.create_new_bucket
-    assert_equal 1, @redis.get("buckets")
+    assert_equal 1, @redis.get("lsh:buckets")
     @storage.create_new_bucket
-    assert_equal 2, @redis.get("buckets")
+    assert_equal 2, @redis.get("lsh:buckets")
   end
 
   def test_add_vector_to_bucket_find_query
@@ -117,8 +135,13 @@ class MockRedis
     @data[key]
   end
 
-  def flushall
-    @data = {}
+  def keys(pattern)
+    keys = @data.keys.select { |k| k =~ %r{#{pattern.gsub('*', '.*')}} }
+    keys
+  end
+
+  def del(*keys)
+    keys.flatten.each { |k| @data.delete(k) }
   end
 
 end
