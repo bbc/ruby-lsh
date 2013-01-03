@@ -150,7 +150,7 @@ module LSH
     end
 
     def inspect
-      "#<LSH index; dimension: #{storage.parameters.dim}; window size: #{storage.parameters.window}; #{storage.parameters.number_of_random_vectors} random vectors; #{storage.parameters.number_of_independent_projections} independent projections>"
+      "#<LSH index; dimension: #{storage.parameters[:dim]}; window size: #{storage.parameters[:window]}; #{storage.parameters[:number_of_random_vectors]} random vectors; #{storage.parameters[:number_of_independent_projections]} independent projections>"
     end
 
   end

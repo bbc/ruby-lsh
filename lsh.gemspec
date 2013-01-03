@@ -23,4 +23,5 @@ Gem::Specification.new do |s|
   s.add_dependency 'gsl' if ($platform.to_s == 'ruby')
   s.add_dependency 'json'
   s.add_dependency 'redis'
+  s.add_dependency 'sinatra'
 end

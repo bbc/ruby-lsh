@@ -52,6 +52,17 @@ This can be overridden as follow:
 The Redis-backed LSH index is faster using the MRI than JRuby, due to the time it takes to load vectors from their
 binary representations on disk. GSL is much faster than JBLAS on that point.
 
+
+Using the Web frontend
+----------------------
+
+This gem includes a minimal Web API, built using Sinatra. See examples/config.ru for an example setup.
+
+    $ cd examples
+    $ rackup
+    $ curl --data-urlencode data@vector.json http://localhost:9292/index # Adds a vector to the index
+    $ curl --data-urlencode data@vector.json http://localhost:9292/query # Query the index
+
 Licensing terms and authorship
 ------------------------------
 
