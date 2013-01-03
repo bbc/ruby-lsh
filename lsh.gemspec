@@ -2,8 +2,8 @@ $platform ||= RUBY_PLATFORM[/java/] || 'ruby'
 
 Gem::Specification.new do |s|
   s.name = "lsh"
-  s.version = "0.1.6"
-  s.date = "2013-01-02"
+  s.version = "0.2.0"
+  s.date = "2013-01-03"
   s.summary = "Locality Sensitive Hashing gem"
   s.email = "yves.raimond@bbc.co.uk"
   s.description = "An implementation of LSH in Ruby, using JBLAS for JRuby and GSL for MRI"
@@ -15,6 +15,7 @@ Gem::Specification.new do |s|
     "lib/lsh/index.rb", 
     "lib/lsh/math_util_gsl.rb",
     "lib/lsh/math_util_jblas.rb",
+    "lib/lsh/web.rb", 
     "lib/lsh/storage/memory.rb",
     "lib/lsh/storage/redis_backend.rb",
   ]
