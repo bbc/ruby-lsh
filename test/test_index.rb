@@ -97,6 +97,13 @@ class TestIndex < Test::Unit::TestCase
     assert_equal [v1], @index.storage.query_buckets([@index.array_to_hash(@index.hashes(v1)[0])])
   end
 
+  def test_add_with_id
+    v1 = @index.random_vector(10)
+    @index.add(v1, 'id')
+    assert_equal [v1], @index.storage.query_buckets([@index.array_to_hash(@index.hashes(v1)[0])])
+    assert_equal 'id', @index.vector_id(v1)
+  end
+
   def test_query
     100.times do |i|
       v1 = @index.random_vector_unit(10) # If not normed, there's no warranty another vector won't be more similar to v1 than itself

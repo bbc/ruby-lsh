@@ -117,6 +117,15 @@ module LSH
         @redis.sadd "#{bucket}:#{hash}", vector.hash.to_s # Only storing vector's hash in Redis
       end
 
+      def add_vector_id(vector, id)
+        @redis.set "lsh:vector_to_id:#{vector.hash}", id
+      end
+
+      def vector_id(vector)
+        @redis.get "lsh:vector_to_id:#{vector.hash}"
+      end
+
+
       def find_bucket(i)
         "lsh:bucket:#{i}"
       end

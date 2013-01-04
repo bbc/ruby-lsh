@@ -105,6 +105,11 @@ class TestStorageRedis < Test::Unit::TestCase
     assert_equal [v], @storage.query_buckets(['hash'])
   end
 
+  def test_add_and_query_vector_id
+    @storage.add_vector_id('foo', 'id')
+    assert_equal 'id', @storage.vector_id('foo')
+  end
+
 end
 
 class MockRedis

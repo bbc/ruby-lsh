@@ -38,12 +38,17 @@ module LSH
       Index.new(storage.parameters, storage) if storage.has_index? 
     end
 
-    def add(vector)
+    def add(vector, id = nil)
+      storage.add_vector_id(vector, id) if id
       hashes(vector).each_with_index do |hash, i|
         hash_i = array_to_hash(hash)
         bucket = storage.find_bucket(i)
         storage.add_vector_to_bucket(bucket, hash_i, vector)
       end
+    end
+
+    def vector_id(vector)
+      storage.vector_id(vector)
     end
 
     def query(vector, multiprobe_radius = 0)
