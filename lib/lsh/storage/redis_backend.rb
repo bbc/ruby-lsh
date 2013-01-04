@@ -112,19 +112,32 @@ module LSH
         @redis.incr "lsh:buckets"
       end
 
+      def save_vector(vector)
+        path = File.join(@data_dir, vector.hash.to_s+'.dat')
+        vector.save(path) unless File.exists?(path)
+      end
+
       def add_vector_to_bucket(bucket, hash, vector)
-        vector.save(File.join(@data_dir, vector.hash.to_s+'.dat')) # Writing vector to disk
+        save_vector(vector) # Writing vector to disk
         @redis.sadd "#{bucket}:#{hash}", vector.hash.to_s # Only storing vector's hash in Redis
       end
 
       def add_vector_id(vector, id)
+        save_vector(vector)
         @redis.set "lsh:vector_to_id:#{vector.hash}", id
+        @redis.set "lsh:id_to_vector:#{id}", vector.hash.to_s
       end
 
-      def vector_id(vector)
+      def vector_to_id(vector)
         @redis.get "lsh:vector_to_id:#{vector.hash}"
       end
 
+      def id_to_vector(id)
+        vector_hash = @redis.get "lsh:id_to_vector:#{id}"
+        vector = MathUtil.zeros(parameters[:dim])
+        vector.load(File.join(@data_dir, vector_hash+'.dat'))
+        vector
+      end
 
       def find_bucket(i)
         "lsh:bucket:#{i}"

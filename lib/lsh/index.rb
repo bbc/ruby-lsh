@@ -47,8 +47,12 @@ module LSH
       end
     end
 
-    def vector_id(vector)
-      storage.vector_id(vector)
+    def vector_to_id(vector)
+      storage.vector_to_id(vector)
+    end
+
+    def id_to_vector(id)
+      storage.id_to_vector(id)
     end
 
     def query(vector, multiprobe_radius = 0)
@@ -67,6 +71,18 @@ module LSH
       end
       results = MathUtil.uniq(results)
       order_vectors_by_similarity(vector, results)
+    end
+
+    def query_ids(id, multiprobe_radius = 0)
+      vector = id_to_vector(id)
+      query_ids_by_vector(vector, multiprobe_radius)
+    end
+
+    def query_ids_by_vector(vector, multiprobe_radius = 0)
+      vectors = query(vector, multiprobe_radius)
+      results = []
+      vectors.each { |v| results << vector_to_id(v) }
+      results
     end
 
     def multiprobe_hashes_arrays(hash_arrays, multiprobe_radius)

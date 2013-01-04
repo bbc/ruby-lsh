@@ -46,12 +46,18 @@ module LSH
       end
 
       def add_vector_id(vector, id)
-        @vector_ids ||= {}
-        @vector_ids[vector.hash] = id
+        @vector_to_id ||= {}
+        @vector_to_id[vector.hash] = id
+        @id_to_vector ||= {}
+        @id_to_vector[id] = vector
       end
 
-      def vector_id(vector)
-        @vector_ids[vector.hash]
+      def vector_to_id(vector)
+        @vector_to_id[vector.hash]
+      end
+
+      def id_to_vector(id)
+        @id_to_vector[id]
       end
 
       def find_bucket(i)

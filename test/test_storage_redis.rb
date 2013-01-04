@@ -106,8 +106,12 @@ class TestStorageRedis < Test::Unit::TestCase
   end
 
   def test_add_and_query_vector_id
-    @storage.add_vector_id('foo', 'id')
-    assert_equal 'id', @storage.vector_id('foo')
+    index = LSH::Index.new(@parameters, @storage)
+    v = index.random_vector(10)
+    @storage.add_vector_id(v, 'id')
+    @storage.add_vector_to_bucket(@storage.find_bucket(0), 'hash', v)
+    assert_equal 'id', @storage.vector_to_id(v)
+    assert_equal v, @storage.id_to_vector('id')
   end
 
 end

@@ -54,7 +54,8 @@ class TestStorageMemory < Test::Unit::TestCase
 
   def test_add_and_query_vector_id
     @storage.add_vector_id('foo', 'id')
-    assert_equal 'id', @storage.vector_id('foo')
+    assert_equal 'id', @storage.vector_to_id('foo')
+    assert_equal 'foo', @storage.id_to_vector('id')
   end
 
 end

@@ -101,7 +101,8 @@ class TestIndex < Test::Unit::TestCase
     v1 = @index.random_vector(10)
     @index.add(v1, 'id')
     assert_equal [v1], @index.storage.query_buckets([@index.array_to_hash(@index.hashes(v1)[0])])
-    assert_equal 'id', @index.vector_id(v1)
+    assert_equal 'id', @index.vector_to_id(v1)
+    assert_equal v1, @index.id_to_vector('id')
   end
 
   def test_query
@@ -110,6 +111,18 @@ class TestIndex < Test::Unit::TestCase
       @index.add(v1)
       assert_equal v1, @index.query(v1).first
     end
+  end
+
+  def test_query_ids_by_vector
+    v1 = @index.random_vector(10)
+    @index.add(v1, 'foo')
+    assert_equal ['foo'], @index.query_ids_by_vector(v1)
+  end
+
+  def test_query_ids
+    v1 = @index.random_vector(10)
+    @index.add(v1, 'foo')
+    assert_equal ['foo'], @index.query_ids('foo')
   end
 
   def test_multiprobe_hashes
