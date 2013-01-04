@@ -117,13 +117,19 @@ module LSH
         vector.save(path) unless File.exists?(path)
       end
 
+      def load_vector(hash)
+        vector = MathUtil.zeros(parameters[:dim])
+        vector.load(File.join(@data_dir, hash+'.dat'))
+        vector
+      end
+
       def add_vector_to_bucket(bucket, hash, vector)
-        save_vector(vector) # Writing vector to disk
+        save_vector(vector) # Writing vector to disk if not already there
         @redis.sadd "#{bucket}:#{hash}", vector.hash.to_s # Only storing vector's hash in Redis
       end
 
       def add_vector_id(vector, id)
-        save_vector(vector)
+        save_vector(vector) # Writing vector to disk if not already there
         @redis.set "lsh:vector_to_id:#{vector.hash}", id
         @redis.set "lsh:id_to_vector:#{id}", vector.hash.to_s
       end
@@ -134,9 +140,7 @@ module LSH
 
       def id_to_vector(id)
         vector_hash = @redis.get "lsh:id_to_vector:#{id}"
-        vector = MathUtil.zeros(parameters[:dim])
-        vector.load(File.join(@data_dir, vector_hash+'.dat'))
-        vector
+        load_vector(vector_hash)
       end
 
       def find_bucket(i)
@@ -155,8 +159,7 @@ module LSH
         vector_hashes.uniq!
         results = []
         vector_hashes.each do |vector_hash|
-          vector = MathUtil.zeros(parameters[:dim])
-          vector.load(File.join(@data_dir, vector_hash+'.dat'))
+          vector = load_vector(vector_hash)
           results << vector
         end
         results
