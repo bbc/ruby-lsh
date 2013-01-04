@@ -71,4 +71,20 @@ class TestWeb < Test::Unit::TestCase
     assert (not last_response.ok?)
   end
 
+  def test_query_ids
+    v = @index.random_vector(10)
+    post '/query-ids', :data => v.to_json
+    assert last_response.ok?
+    assert JSON.parse(last_response.body)['results'].empty?
+    post '/query-ids', :id => 'foo'
+    assert (not last_response.ok?) # id doesn't exist
+    post '/index', :data => v.to_json, :id => 'foo'
+    post '/query-ids', :data => v.to_json
+    assert last_response.ok?
+    assert_equal ['foo'], JSON.parse(last_response.body)['results']
+    post '/query-ids', :id => 'foo'
+    assert last_response.ok?
+    assert_equal ['foo'], JSON.parse(last_response.body)['results']
+  end
+
 end

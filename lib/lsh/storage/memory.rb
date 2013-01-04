@@ -53,11 +53,11 @@ module LSH
       end
 
       def vector_to_id(vector)
-        @vector_to_id[vector.hash]
+        @vector_to_id[vector.hash] if @vector_to_id
       end
 
       def id_to_vector(id)
-        @id_to_vector[id]
+        @id_to_vector[id] if @id_to_vector
       end
 
       def find_bucket(i)
