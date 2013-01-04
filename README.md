@@ -63,6 +63,13 @@ This gem includes a minimal Web API, built using Sinatra. See examples/config.ru
     $ curl --data-urlencode data@vector.json http://localhost:9292/index # Adds a vector to the index
     $ curl --data-urlencode data@vector.json http://localhost:9292/query # Query the index
 
+Or you can associate your vectors with ids and query using them.
+
+    $ cd examples
+    $ rackup
+    $ curl --data-urlencode data@vector.json -d'id=foo' http://localhost:9292/index # Adds a vector with id 'foo' to the index
+    $ curl -d'id=foo' http://localhost:9292/query-ids # Query the index
+
 Licensing terms and authorship
 ------------------------------
 
