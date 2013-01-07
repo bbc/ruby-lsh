@@ -70,6 +70,17 @@ Or you can associate your vectors with ids and query using them.
     $ curl --data-urlencode data@vector.json -d'id=foo' http://localhost:9292/index # Adds a vector with id 'foo' to the index
     $ curl -d'id=foo' http://localhost:9292/query-ids # Query the index
 
+GSL notes
+---------
+
+If you get a compilation error when installing GSL, try this version:
+
+  https://github.com/romanbsd/rb-gsl
+
+As you will need a version of GSL that includes this patch:
+
+  https://gist.github.com/1217974
+
 Licensing terms and authorship
 ------------------------------
 
