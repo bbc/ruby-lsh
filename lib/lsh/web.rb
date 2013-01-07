@@ -24,7 +24,13 @@ module LSH
       if mime_type == 'application/json'
         t0 = Time.now
         vector = JSON.parse(params[:data])
-        results = index.query(vector, params[:radius] || 0)
+        result_vectors = index.query(vector, params[:radius] || 0)
+        results = []
+        if params[:include] == 'id'
+          result_vectors.each { |v| results << { :id => index.vector_to_id(v), :data => v } }
+        else
+          result_vectors.each { |v| results << { :data => v } }
+        end
         content_type :json
         { "time" => Time.now - t0, "results" => results }.to_json
       else
