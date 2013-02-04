@@ -40,7 +40,8 @@ module LSH
       end
 
       def clear_data!
-        @redis.del(@redis.keys("lsh:bucket:*"))
+        keys = @redis.keys("lsh:bucket:*")
+        @redis.del(keys) unless keys.empty?
         delete_dat_files_in_dir(@data_dir)
       end
 
