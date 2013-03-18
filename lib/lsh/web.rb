@@ -23,7 +23,7 @@ module LSH
       mime_type = (params[:mime_type] || 'application/json')
       if mime_type == 'application/json'
         t0 = Time.now
-        vector = JSON.parse(params[:data])
+        vector = JSON.parse(params[:data], :create_additions => true)
         result_vectors = index.query(vector, params[:radius] || 0)
         results = []
         if params[:include] == 'id'
@@ -43,7 +43,7 @@ module LSH
         mime_type = (params[:mime_type] || 'application/json')
         if mime_type == 'application/json'
           t0 = Time.now
-          vector = JSON.parse(params[:data])
+          vector = JSON.parse(params[:data], :create_additions => true)
           results = index.query_ids_by_vector(vector, params[:radius] || 0)
           content_type :json
           { "time" => Time.now - t0, "results" => results }.to_json
@@ -66,7 +66,7 @@ module LSH
       mime_type = (params[:mime_type] || 'application/json')
       if mime_type == 'application/json'
         t0 = Time.now
-        vector = JSON.parse(params[:data])
+        vector = JSON.parse(params[:data], :create_additions => true)
         index.add(vector, params[:id])
         content_type :json
         { "time" => Time.now - t0, "status" => "indexed" }.to_json

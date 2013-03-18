@@ -24,16 +24,16 @@ module LSH
       JBLAS.rand[0,0]
     end
 
-    def self.random_gaussian_vector(dim)
-      JBLAS.randn(1, dim)
-    end
-
     def self.random_gaussian_matrix(k, l)
       JBLAS.randn(k, l)
     end
 
-    def self.zeros(dim)
-      JBLAS::DoubleMatrix.new(1, dim)
+    def self.random_gaussian_vector(l)
+      random_gaussian_matrix(1, l)
+    end
+
+    def self.zeros(k, l)
+      JBLAS::DoubleMatrix.new(k, l)
     end
 
     def self.dot(v1, v2)
@@ -66,6 +66,10 @@ module JBLAS
 
     def self.json_create(o)
       from_array(o['data']).t
+    end
+
+    def size
+      [ rows, columns ]
     end
 
   end

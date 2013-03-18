@@ -64,12 +64,12 @@ class TestWeb < Test::Unit::TestCase
     post '/query', :data => v.to_json
     assert last_response.ok?
     assert_equal 1, JSON.parse(last_response.body)['results'].size
-    assert_equal v, JSON.parse(last_response.body)['results'].first['data']
+    assert_equal v, JSON.parse(last_response.body, :create_additions => true)['results'].first['data']
     assert_equal nil, JSON.parse(last_response.body)['results'].first['id'] # No id
     post '/query', :data => v.to_json, :include => 'id'
     assert last_response.ok?
     assert_equal 1, JSON.parse(last_response.body)['results'].size
-    assert_equal v, JSON.parse(last_response.body)['results'].first['data']
+    assert_equal v, JSON.parse(last_response.body, :create_additions => true)['results'].first['data']
     assert_equal 'foo', JSON.parse(last_response.body)['results'].first['id'] # id is included
   end
 

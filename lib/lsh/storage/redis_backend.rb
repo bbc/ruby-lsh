@@ -68,9 +68,7 @@ module LSH
         # (too slow to serialize and store in Redis for
         # large number of dimensions/projections)
         projections.each_with_index do |projection, i|
-          projection.each_with_index do |vector, j|
-            vector.save(File.join(@data_dir, 'projections', "vector_#{i}_#{j}.dat"))
-          end
+          projection.save(File.join(@data_dir, 'projections', "projection_#{i}.dat"))
         end
       end
 
@@ -79,13 +77,9 @@ module LSH
         @projections ||= (
           projections = []
           parameters[:number_of_independent_projections].times do |i|
-            vectors = []
-            parameters[:number_of_random_vectors].times do |j|
-              v = MathUtil.zeros(parameters[:dim])
-              v.load(File.join(@data_dir, 'projections', "vector_#{i}_#{j}.dat"))
-              vectors << v
-            end
-            projections << vectors
+            m = MathUtil.zeros(parameters[:dim], parameters[:number_of_random_vectors])
+            m.load(File.join(@data_dir, 'projections', "projection_#{i}.dat"))
+            projections << m
           end
           projections
         )
@@ -119,7 +113,7 @@ module LSH
       end
 
       def load_vector(hash)
-        vector = MathUtil.zeros(parameters[:dim])
+        vector = MathUtil.zeros(1, parameters[:dim])
         vector.load(File.join(@data_dir, hash+'.dat'))
         vector
       end

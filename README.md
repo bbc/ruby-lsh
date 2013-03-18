@@ -81,6 +81,7 @@ As you will need a version of GSL that includes this patch:
 
   https://gist.github.com/1217974
 
+
 Licensing terms and authorship
 ------------------------------
 

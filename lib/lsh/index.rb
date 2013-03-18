@@ -111,9 +111,9 @@ module LSH
 
     def hash(vector, projection, bias = true)
       hash = []
-      projection.each do |random_vector|
-        dot_product = similarity(vector, random_vector)
-        window = storage.parameters[:window]
+      dot_products = (vector * projection).row(0).to_a
+      window = storage.parameters[:window]
+      dot_products.each do |dot_product|
         if window == Float::INFINITY # Binary LSH
           if dot_product >= 0
             hash << 1
@@ -126,6 +126,15 @@ module LSH
         end
       end
       hash
+    end
+
+    def random_vector(dim)
+      MathUtil.random_gaussian_matrix(1, dim)
+    end
+
+    def random_vector_unit(dim)
+      r = random_vector(dim)
+      r /= MathUtil.norm(r)
     end
 
     def array_to_hash(array)
@@ -150,20 +159,7 @@ module LSH
     end
 
     def generate_projection(dim, k)
-      vectors = []
-      k.times do |i|
-        vectors << random_vector(dim)
-      end
-      vectors
-    end
-
-    def random_vector_unit(dim)
-      r = random_vector(dim)
-      r /= MathUtil.norm(r)
-    end
-
-    def random_vector(dim)
-      MathUtil.random_gaussian_vector(dim)
+      MathUtil.random_gaussian_matrix(dim, k)
     end
 
     def similarity(v1, v2)

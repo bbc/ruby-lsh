@@ -27,20 +27,24 @@ module LSH
       @@gsl_random.uniform
     end
 
+    def self.zeros(k, l)
+      GSL::Matrix.alloc(k, l)
+    end
+
     def self.random_gaussian_vector(dim)
       @@gsl_random.gaussian(1, dim)
     end
 
-    def self.zeros(dim)
-      GSL::Vector.alloc(dim)
-    end
-
     def self.random_gaussian_matrix(k, l)
-      GSL::Matrix.randn(k, l)
+      matrix = zeros(k, l)
+      (0..(k - 1)).each do |i|
+        matrix.set_row(i, random_gaussian_vector(l))
+      end
+      matrix
     end
 
     def self.dot(v1, v2)
-      v1 * v2.col
+      (v1 * v2.transpose)[0,0]
     end
 
     def self.norm(v)
@@ -49,7 +53,7 @@ module LSH
 
     def self.uniq(vs)
       # Can't use uniq as
-      # [ v, JSON.parse(v.to_json) ].uniq.size == 2 with GSL
+      # [ v, JSON.parse(v.to_json, :create_additions => true) ].uniq.size == 2 with GSL
       results = []
       vs.each { |v| results << v unless results.member? v }
       results
@@ -61,7 +65,7 @@ end
 
 module GSL
 
-  class Vector
+  class Matrix
 
     def to_json(*a)
       {

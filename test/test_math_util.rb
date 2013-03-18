@@ -25,32 +25,32 @@ class MathUtilTest < Test::Unit::TestCase
     end
   end
 
-  def test_random_gaussian_vector
-    assert_equal 10, LSH::MathUtil.random_gaussian_vector(10).size
+  def test_random_gaussian_matrix
+    assert_equal [5, 10], LSH::MathUtil.random_gaussian_matrix(5, 10).size
   end
 
   def test_dot
-    assert_equal Float, LSH::MathUtil.dot(LSH::MathUtil.random_gaussian_vector(10), LSH::MathUtil.random_gaussian_vector(10)).class
+    assert_equal Float, LSH::MathUtil.dot(LSH::MathUtil.random_gaussian_matrix(1, 10), LSH::MathUtil.random_gaussian_matrix(1, 10)).class
   end
 
   def test_norm
-    v = LSH::MathUtil.random_gaussian_vector(10)
+    v = LSH::MathUtil.random_gaussian_matrix(1, 10)
     assert_equal 1.0, LSH::MathUtil.norm(v / LSH::MathUtil.norm(v)).round(4)
   end
 
   def test_json
-    v = LSH::MathUtil.random_gaussian_vector(10)
-    assert_equal v, JSON.parse(v.to_json)
+    v = LSH::MathUtil.random_gaussian_matrix(1, 10)
+    assert_equal v, JSON.parse(v.to_json, :create_additions => true)
   end
 
   def test_uniq
-    v = LSH::MathUtil.random_gaussian_vector(10)
-    assert_equal 1, LSH::MathUtil.uniq([v, JSON.parse(v.to_json)]).size
+    v = LSH::MathUtil.random_gaussian_matrix(1, 10)
+    assert_equal 1, LSH::MathUtil.uniq([v, JSON.parse(v.to_json, :create_additions => true)]).size
   end
 
   def test_hash
-    v = LSH::MathUtil.random_gaussian_vector(10)
-    assert_equal v.hash, JSON.parse(v.to_json).hash
+    v = LSH::MathUtil.random_gaussian_matrix(1, 10)
+    assert_equal v.hash, JSON.parse(v.to_json, :create_additions => true).hash
   end
 
 end
