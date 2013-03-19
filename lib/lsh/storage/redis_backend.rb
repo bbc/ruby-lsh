@@ -77,7 +77,7 @@ module LSH
         @projections ||= (
           projections = []
           parameters[:number_of_independent_projections].times do |i|
-            m = MathUtil.zeros(parameters[:dim], parameters[:number_of_random_vectors])
+            m = MathUtil.zeros(parameters[:number_of_random_vectors], parameters[:dim])
             m.load(File.join(@data_dir, 'projections', "projection_#{i}.dat"))
             projections << m
           end
