@@ -18,7 +18,7 @@ module LSH
 
   class Index
 
-    attr_reader :projections, :buckets, :storage
+    attr_reader :storage
 
     def initialize(parameters = {}, storage = LSH::Storage::Memory.new)
       @storage = storage
@@ -111,7 +111,7 @@ module LSH
 
     def hash(vector, projection, bias = true)
       hash = []
-      dot_products = (vector * projection).row(0).to_a
+      dot_products = (projection * vector.transpose).column(0).to_a
       window = storage.parameters[:window]
       dot_products.each do |dot_product|
         if window == Float::INFINITY # Binary LSH
@@ -159,7 +159,7 @@ module LSH
     end
 
     def generate_projection(dim, k)
-      MathUtil.random_gaussian_matrix(dim, k)
+      MathUtil.random_gaussian_matrix(k, dim)
     end
 
     def similarity(v1, v2)
