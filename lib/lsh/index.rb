@@ -63,6 +63,7 @@ module LSH
       # Take query hashes, move them around at radius r, and use them to do another query
       # TODO: only works for binary LSH atm
       if multiprobe_radius > 0
+        raise Exception.new("Non-zero multiprobe radius only implemented for binary LSH") unless hashes_are_binary?
         mp_arrays = multiprobe_hashes_arrays(hash_arrays, multiprobe_radius)
         mp_arrays.each do |probes_arrays|
           probes_hashes = probes_arrays.map { |a| array_to_hash(a) }
@@ -126,6 +127,10 @@ module LSH
         end
       end
       hash
+    end
+
+    def hashes_are_binary?
+      storage.parameters[:window] == Float::INFINITY
     end
 
     def random_vector(dim)

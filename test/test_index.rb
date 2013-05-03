@@ -148,4 +148,14 @@ class TestIndex < Test::Unit::TestCase
     assert @index.query(v1, 0).empty?
   end
 
+  def test_multiprobe_query_non_binary
+    parms = @parameters.clone
+    parms[:window] = 2
+    index = LSH::Index.new(parms)
+    v = @index.random_vector(10)
+    assert_raise Exception do
+      index.query(v, 1)
+    end
+  end
+
 end
