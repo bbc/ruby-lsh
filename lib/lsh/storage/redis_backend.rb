@@ -28,10 +28,8 @@ module LSH
       def initialize(params = { :redis => { :host => '127.0.0.1', :port => 6379 }, :data_dir => 'data' })
         @redis = Redis.new(params[:redis])
         @data_dir = params[:data_dir]
-        unless File.exists?(@data_dir)
-          Dir.mkdir(@data_dir)
-          Dir.mkdir(File.join(@data_dir, 'projections'))
-        end
+        Dir.mkdir(@data_dir) unless File.exists?(@data_dir)
+        Dir.mkdir(File.join(@data_dir, 'projections')) unless File.exists?(File.join(@data_dir, 'projections'))
       end
 
       def reset!
