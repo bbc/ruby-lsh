@@ -1,7 +1,13 @@
 ruby-lsh
 ========
 
-A first try at implementing LSH in Ruby. Uses JBlas on JRuby and GSL on any other Ruby.
+An implementation of Locality-Sensitive Hashing in Ruby. 
+
+Locality-Sensitive Hashing is an efficient technique for finding nearest neighbors in high-dimensional spaces.
+
+Uses JBlas on JRuby and GSL on any other Ruby. Supports two backends (in-memory and Redis-backed) and includes a small HTTP API.
+
+
 
 Usage
 -----
