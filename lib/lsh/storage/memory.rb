@@ -37,27 +37,32 @@ module LSH
         @buckets << {}
       end
 
-      def add_vector_to_bucket(bucket, hash, vector)
+      def add_vector(vector, vector_hash)
+        @vectors ||= {}
+        @vectors[vector_hash] = vector
+      end
+
+      def add_vector_hash_to_bucket(bucket, hash, vector_hash)
         if bucket.has_key? hash
-          bucket[hash] << vector
+          bucket[hash] << vector_hash
         else
-          bucket[hash] = [vector]
+          bucket[hash] = [vector_hash]
         end
       end
 
-      def add_vector_id(vector, id)
+      def add_vector_id(vector_hash, id)
         @vector_to_id ||= {}
-        @vector_to_id[vector.hash] = id
+        @vector_to_id[vector_hash] = id
         @id_to_vector ||= {}
-        @id_to_vector[id] = vector
+        @id_to_vector[id] = vector_hash
       end
 
-      def vector_to_id(vector)
-        @vector_to_id[vector.hash] if @vector_to_id
+      def vector_hash_to_id(vector_hash)
+        @vector_to_id[vector_hash] if @vector_to_id
       end
 
       def id_to_vector(id)
-        @id_to_vector[id] if @id_to_vector
+        @vectors[@id_to_vector[id]] if @id_to_vector
       end
 
       def find_bucket(i)
@@ -65,12 +70,17 @@ module LSH
       end
 
       def query_buckets(hashes)
-        results = []
+        results_hashes = []
         hashes.each_with_index do |hash, i|
-          vectors_in_bucket = @buckets[i][hash]
-          results += vectors_in_bucket if vectors_in_bucket
+          vectors_hashes_in_bucket = @buckets[i][hash]
+          if vectors_hashes_in_bucket
+            vectors_hashes_in_bucket.each do |vector_hash|
+              results_hashes << vector_hash
+            end
+          end
         end
-        results
+        results_hashes.uniq!
+        results_hashes.map { |vector_hash| @vectors[vector_hash] }
       end
 
     end
