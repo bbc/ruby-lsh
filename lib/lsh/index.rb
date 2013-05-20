@@ -39,7 +39,7 @@ module LSH
     end
 
     def add(vector, id = nil)
-      vector_hash = vector.to_a.hash
+      vector_hash = vector.hash
       storage.add_vector(vector, vector_hash)
       storage.add_vector_id(vector_hash, id) if id
       hashes(vector).each_with_index do |hash, i|
@@ -50,7 +50,7 @@ module LSH
     end
 
     def vector_to_id(vector)
-      storage.vector_hash_to_id(vector.to_a.hash)
+      storage.vector_hash_to_id(vector.hash)
     end
 
     def id_to_vector(id)
