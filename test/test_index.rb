@@ -75,18 +75,21 @@ class TestIndex < Test::Unit::TestCase
     assert (hashes.first.first == first_hash_value or hashes.first.first == first_hash_value + 1)
   end
 
-  def test_order_vectors_by_similarity
+  def test_order_results_by_similarity
     100.times do |i|
       v1 = @index.random_vector(10)
       v2 = @index.random_vector(10)
       v3 = @index.random_vector(10)
+      r1 = { :data => v1, :hash => v1.hash, :id => 'a' }
+      r2 = { :data => v2, :hash => v2.hash, :id => 'b' }
+      r3 = { :data => v3, :hash => v3.hash, :id => 'c' }
       d11 = @index.similarity(v1, v1)
       d12 = @index.similarity(v1, v2)
       d13 = @index.similarity(v1, v3)
       if d11 > d12 and d12 > d13
-        assert_equal [v1, v2, v3], @index.order_vectors_by_similarity(v1, [v1,v2,v3])
+        assert_equal [r1, r2, r3], @index.order_results_by_similarity(v1, [r1,r2,r3])
       elsif d11 > d13 and d13 > d12
-        assert_equal [v1, v3, v2], @index.order_vectors_by_similarity(v1, [v1,v2,v3])
+        assert_equal [r1, r3, r2], @index.order_results_by_similarity(v1, [r1,r2,r3])
       end
     end
   end
@@ -94,22 +97,26 @@ class TestIndex < Test::Unit::TestCase
   def test_add
     v1 = @index.random_vector(10)
     @index.add(v1)
-    assert_equal [v1], @index.storage.query_buckets([@index.array_to_hash(@index.hashes(v1)[0])])
+    results = @index.storage.query_buckets([@index.array_to_hash(@index.hashes(v1)[0])])
+    assert_equal [{ :data => v1, :hash => v1.hash, :id => nil }], results
   end
 
   def test_add_with_id
     v1 = @index.random_vector(10)
     @index.add(v1, 'id')
-    assert_equal [v1], @index.storage.query_buckets([@index.array_to_hash(@index.hashes(v1)[0])])
-    assert_equal 'id', @index.vector_to_id(v1)
+    results = @index.storage.query_buckets([@index.array_to_hash(@index.hashes(v1)[0])])
+    assert_equal [{ :data => v1, :hash => v1.hash, :id => 'id' }], results 
+    assert_equal 'id', @index.vector_hash_to_id(v1.hash)
     assert_equal v1, @index.id_to_vector('id')
   end
 
   def test_query
     100.times do |i|
-      v1 = @index.random_vector_unit(10) # If not normed, there's no warranty another vector won't be more similar to v1 than itself
+      v1 = @index.random_vector_unit(10) # If not normed, we can't be sure another vector won't be more similar to v1 than itself
       @index.add(v1)
-      assert_equal v1, @index.query(v1).first
+      assert_equal v1, @index.query(v1).first[:data]
+      assert_equal v1.hash, @index.query(v1).first[:hash]
+      assert_equal nil, @index.query(v1).first[:id]
     end
   end
 
@@ -144,7 +151,7 @@ class TestIndex < Test::Unit::TestCase
     bucket = @index.storage.find_bucket(0)
     @index.storage.add_vector_hash_to_bucket(bucket, @index.array_to_hash(hash_array), v1.hash)
     # But we should still be able to retrieve v1 with multiprobe radius 1
-    assert_equal [v1], @index.query(v1, 1) 
+    assert_equal [{ :data => v1, :hash => v1.hash, :id => nil }], @index.query(v1, 1) 
     # It should return no results with no multiprobes
     assert @index.query(v1, 0).empty?
   end

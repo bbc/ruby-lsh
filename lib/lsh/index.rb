@@ -49,8 +49,8 @@ module LSH
       end
     end
 
-    def vector_to_id(vector)
-      storage.vector_hash_to_id(vector.hash)
+    def vector_hash_to_id(vector_hash)
+      storage.vector_hash_to_id(vector_hash)
     end
 
     def id_to_vector(id)
@@ -71,8 +71,9 @@ module LSH
           probes_hashes = probes_arrays.map { |a| array_to_hash(a) }
           results += storage.query_buckets(probes_hashes)
         end
+        results.uniq! { |result| result[:hash] }
       end
-      order_vectors_by_similarity(vector, results)
+      order_results_by_similarity(vector, results)
     end
 
     def query_ids(id, multiprobe_radius = 0)
@@ -81,10 +82,8 @@ module LSH
     end
 
     def query_ids_by_vector(vector, multiprobe_radius = 0)
-      vectors = query(vector, multiprobe_radius)
-      results = []
-      vectors.each { |v| results << vector_to_id(v) }
-      results
+      results = query(vector, multiprobe_radius)
+      results.map { |result| vector_hash_to_id(result[:hash]) }
     end
 
     def multiprobe_hashes_arrays(hash_arrays, multiprobe_radius)
@@ -99,10 +98,11 @@ module LSH
       mp_arrays
     end
 
-    def order_vectors_by_similarity(vector, vectors)
+    def order_results_by_similarity(vector, results)
       # Faster than vectors.sort - we precompute all similarities to vector
       # and order using those
-      vectors.map { |v| [ v, similarity(vector, v) ] } .sort_by { |v, sim| sim } .reverse .map { |vs| vs[0] }
+      similarities = results.map { |result| [ result[:hash], result[:id], result[:data], similarity(vector, result[:data]) ] }
+      similarities.sort_by { |hash, id, vector, sim| sim } .reverse .map { |vs| { :hash => vs[0], :id => vs[1], :data => vs[2] } }
     end
 
     def hashes(vector)

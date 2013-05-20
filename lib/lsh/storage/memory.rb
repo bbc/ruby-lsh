@@ -82,7 +82,13 @@ module LSH
             end
           end
         end
-        results_hashes.keys.map { |vector_hash| @vectors[vector_hash] }
+        results_hashes.keys.map do |vector_hash|
+          { 
+            :data => @vectors[vector_hash], 
+            :hash => vector_hash, 
+            :id => vector_hash_to_id(vector_hash)
+          }
+        end
       end
 
     end

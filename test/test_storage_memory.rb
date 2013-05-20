@@ -50,7 +50,7 @@ class TestStorageMemory < Test::Unit::TestCase
     @storage.add_vector(v, v.hash)
     @storage.add_vector_hash_to_bucket(@storage.find_bucket(0), 'hash', v.hash)
     assert_equal v.hash, @storage.buckets[0]['hash'].first
-    assert_equal [v], @storage.query_buckets(['hash'])
+    assert_equal [{ :data => v, :hash => v.hash, :id => nil }], @storage.query_buckets(['hash'])
   end
 
   def test_add_and_query_vector_id
