@@ -73,17 +73,16 @@ module LSH
       end
 
       def query_buckets(hashes)
-        results_hashes = []
+        results_hashes = {}
         hashes.each_with_index do |hash, i|
           vectors_hashes_in_bucket = @buckets[i][hash]
           if vectors_hashes_in_bucket
             vectors_hashes_in_bucket.each do |vector_hash|
-              results_hashes << vector_hash
+              results_hashes[vector_hash] = true
             end
           end
         end
-        results_hashes.uniq!
-        results_hashes.map { |vector_hash| @vectors[vector_hash] }
+        results_hashes.keys.map { |vector_hash| @vectors[vector_hash] }
       end
 
     end

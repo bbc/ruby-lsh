@@ -121,6 +121,8 @@ module LSH
     end
 
     def order_vectors_by_similarity(vector, vectors)
+      # Faster than vectors.sort - we precompute all similarities to vector
+      # and order using those
       vectors.map { |v| [ v, similarity(vector, v) ] } .sort_by { |v, sim| sim } .reverse .map { |vs| vs[0] }
     end
 
