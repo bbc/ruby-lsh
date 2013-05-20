@@ -40,6 +40,10 @@ module LSH
       def clear_data!
         keys = @redis.keys("lsh:bucket:*")
         @redis.del(keys) unless keys.empty?
+        keys = @redis.keys("lsh:vector_to_id:*")
+        @redis.del(keys) unless keys.empty?
+        keys = @redis.keys("lsh:id_to_vector:*")
+        @redis.del(keys) unless keys.empty?
         delete_dat_files_in_dir(@data_dir)
       end
 
@@ -105,8 +109,8 @@ module LSH
         @redis.incr "lsh:buckets"
       end
 
-      def save_vector(vector)
-        path = File.join(@data_dir, vector.hash.to_s+'.dat')
+      def save_vector(vector, vector_hash)
+        path = File.join(@data_dir, vector_hash.to_s+'.dat')
         vector.save(path) unless File.exists?(path)
       end
 
@@ -116,19 +120,21 @@ module LSH
         vector
       end
 
-      def add_vector_to_bucket(bucket, hash, vector)
-        save_vector(vector) # Writing vector to disk if not already there
-        @redis.sadd "#{bucket}:#{hash}", vector.hash.to_s # Only storing vector's hash in Redis
+      def add_vector(vector, vector_hash)
+        save_vector(vector, vector_hash) # Writing vector to disk if not already there
       end
 
-      def add_vector_id(vector, id)
-        save_vector(vector) # Writing vector to disk if not already there
-        @redis.set "lsh:vector_to_id:#{vector.hash}", id
-        @redis.set "lsh:id_to_vector:#{id}", vector.hash.to_s
+      def add_vector_hash_to_bucket(bucket, hash, vector_hash)
+        @redis.sadd "#{bucket}:#{hash}", vector_hash.to_s # Only storing vector's hash in Redis
       end
 
-      def vector_to_id(vector)
-        @redis.get "lsh:vector_to_id:#{vector.hash}"
+      def add_vector_id(vector_hash, id)
+        @redis.set "lsh:vector_to_id:#{vector_hash}", id
+        @redis.set "lsh:id_to_vector:#{id}", vector_hash.to_s
+      end
+
+      def vector_hash_to_id(vector_hash)
+        @redis.get "lsh:vector_to_id:#{vector_hash}"
       end
 
       def id_to_vector(id)
@@ -141,21 +147,23 @@ module LSH
       end
 
       def query_buckets(hashes)
-        vector_hashes = []
+        results_hashes = {}
         hashes.each_with_index do |hash, i|
           bucket = find_bucket(i)
-          results = @redis.smembers("#{bucket}:#{hash}")
-          vector_hashes += results if results
+          vector_hashes_in_bucket = @redis.smembers("#{bucket}:#{hash}")
+          if vector_hashes_in_bucket
+            vector_hashes_in_bucket.each do |vector_hash|
+              results_hashes[vector_hash] = true
+            end
+          end
         end
-        # Making sure we don't load the same vectors twice if they match
-        # in different random projections
-        vector_hashes.uniq!
-        results = []
-        vector_hashes.each do |vector_hash|
-          vector = load_vector(vector_hash)
-          results << vector
+        results_hashes.keys.map do |vector_hash|
+          {
+            :data => load_vector(vector_hash),
+            :hash => vector_hash.to_i,
+            :id => vector_hash_to_id(vector_hash)
+          }
         end
-        results
       end
 
     end
