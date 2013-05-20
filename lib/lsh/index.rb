@@ -39,23 +39,14 @@ module LSH
     end
 
     def add(vector, id = nil)
-      t0 = Time.now
       vector_hash = vector.to_a.hash
-      t1 = Time.now
       storage.add_vector(vector, vector_hash)
-      t2 = Time.now
       storage.add_vector_id(vector_hash, id) if id
-      t3 = Time.now
       hashes(vector).each_with_index do |hash, i|
         hash_i = array_to_hash(hash)
         bucket = storage.find_bucket(i)
         storage.add_vector_hash_to_bucket(bucket, hash_i, vector_hash)
       end
-      t4 = Time.now
-      $stderr.puts "t1 - t0: #{t1 - t0}"
-      $stderr.puts "t2 - t1: #{t2 - t1}"
-      $stderr.puts "t3 - t2: #{t3 - t2}"
-      $stderr.puts "t4 - t3: #{t4 - t3}"
     end
 
     def vector_to_id(vector)
@@ -67,13 +58,9 @@ module LSH
     end
 
     def query(vector, multiprobe_radius = 0)
-      t0 = Time.now
       hash_arrays = hashes(vector)
-      t1 = Time.now
       hashes = hash_arrays.map { |a| array_to_hash(a) }
-      t2 = Time.now
       results = storage.query_buckets(hashes)
-      t3 = Time.now
       # Multiprobe LSH
       # Take query hashes, move them around at radius r, and use them to do another query
       # TODO: only works for binary LSH atm
@@ -85,15 +72,7 @@ module LSH
           results += storage.query_buckets(probes_hashes)
         end
       end
-      t4 = Time.now
-      results = order_vectors_by_similarity(vector, results)
-      t5 = Time.now
-      $stderr.puts "t1 - t0: #{t1 - t0}"
-      $stderr.puts "t2 - t1: #{t2 - t1}"
-      $stderr.puts "t3 - t2: #{t3 - t2}"
-      $stderr.puts "t4 - t3: #{t4 - t3}"
-      $stderr.puts "t5 - t4: #{t5 - t4}"
-      results
+      order_vectors_by_similarity(vector, results)
     end
 
     def query_ids(id, multiprobe_radius = 0)
