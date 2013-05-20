@@ -43,12 +43,8 @@ class MathUtilTest < Test::Unit::TestCase
     assert_equal v, JSON.parse(v.to_json, :create_additions => true)
   end
 
-  def test_uniq
-    v = LSH::MathUtil.random_gaussian_matrix(1, 10)
-    assert_equal 1, LSH::MathUtil.uniq([v, JSON.parse(v.to_json, :create_additions => true)]).size
-  end
-
   def test_hash
+    # Testing that hash is preserved through serialisation/deserialisation
     v = LSH::MathUtil.random_gaussian_matrix(1, 10)
     assert_equal v.hash, JSON.parse(v.to_json, :create_additions => true).hash
   end
