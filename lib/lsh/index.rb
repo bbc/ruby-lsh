@@ -85,7 +85,6 @@ module LSH
           results += storage.query_buckets(probes_hashes)
         end
       end
-      # results = results.uniq { |v| vector_to_id(v) }
       t4 = Time.now
       results = order_vectors_by_similarity(vector, results)
       t5 = Time.now

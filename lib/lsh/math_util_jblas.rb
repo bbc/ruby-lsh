@@ -44,10 +44,6 @@ module LSH
       v.norm2
     end
 
-    def self.uniq(vs)
-      vs.uniq
-    end
-
   end
 
 end

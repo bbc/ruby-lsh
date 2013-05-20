@@ -51,15 +51,6 @@ module LSH
       v.norm
     end
 
-    def self.uniq(vs)
-      # Can't use uniq as
-      # [ v, JSON.parse(v.to_json, :create_additions => true) ].uniq.size == 2 with GSL
-      #results = []
-      #vs.each { |v| results << v unless results.member? v }
-      #results
-      vs.uniq { |v| v.hash }
-    end
-
   end
 
 end

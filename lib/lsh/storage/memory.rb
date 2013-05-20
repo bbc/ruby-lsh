@@ -30,6 +30,9 @@ module LSH
 
       def reset!
         @buckets = nil
+        @vectors = nil
+        @vector_hash_to_id = nil
+        @id_to_vector = nil
       end
 
       def create_new_bucket
@@ -51,14 +54,14 @@ module LSH
       end
 
       def add_vector_id(vector_hash, id)
-        @vector_to_id ||= {}
-        @vector_to_id[vector_hash] = id
+        @vector_hash_to_id ||= {}
+        @vector_hash_to_id[vector_hash] = id
         @id_to_vector ||= {}
         @id_to_vector[id] = vector_hash
       end
 
       def vector_hash_to_id(vector_hash)
-        @vector_to_id[vector_hash] if @vector_to_id
+        @vector_hash_to_id[vector_hash] if @vector_hash_to_id
       end
 
       def id_to_vector(id)
