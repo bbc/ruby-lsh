@@ -44,18 +44,20 @@ class TestStorageMemory < Test::Unit::TestCase
     assert_equal [], @storage.find_bucket(0).to_a
   end
 
-  def test_add_vector_to_bucket_and_query_buckets
+  def test_add_vector_hash_to_bucket_and_query_buckets
     @storage.create_new_bucket
     v = LSH::MathUtil.random_gaussian_vector(10)
-    @storage.add_vector_to_bucket(@storage.find_bucket(0), 'hash', v)
-    assert_equal v, @storage.buckets[0]['hash'].first
+    @storage.add_vector(v, v.hash)
+    @storage.add_vector_hash_to_bucket(@storage.find_bucket(0), 'hash', v.hash)
+    assert_equal v.hash, @storage.buckets[0]['hash'].first
     assert_equal [v], @storage.query_buckets(['hash'])
   end
 
   def test_add_and_query_vector_id
+    @storage.add_vector('vector', 'foo')
     @storage.add_vector_id('foo', 'id')
-    assert_equal 'id', @storage.vector_to_id('foo')
-    assert_equal 'foo', @storage.id_to_vector('id')
+    assert_equal 'id', @storage.vector_hash_to_id('foo')
+    assert_equal 'vector', @storage.id_to_vector('id')
   end
 
 end
