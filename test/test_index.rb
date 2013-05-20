@@ -137,11 +137,12 @@ class TestIndex < Test::Unit::TestCase
 
   def test_multiprobe_query
     v1 = @index.random_vector(10)
+    @index.storage.add_vector(v1, v1.hash)
     hash_array = @index.hashes(v1)[0]
     hash_array[0] = (hash_array[0] == 0) ? 1 : 0 # We flip the first bit of the first hash
     # We insert v1 at hamming distance 1 of its real hash
     bucket = @index.storage.find_bucket(0)
-    @index.storage.add_vector_to_bucket(bucket, @index.array_to_hash(hash_array), v1)
+    @index.storage.add_vector_hash_to_bucket(bucket, @index.array_to_hash(hash_array), v1.hash)
     # But we should still be able to retrieve v1 with multiprobe radius 1
     assert_equal [v1], @index.query(v1, 1) 
     # It should return no results with no multiprobes
