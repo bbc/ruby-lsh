@@ -18,7 +18,7 @@ See examples/evaluation.rb
     index = LSH::Index.new({
       :dim => 100, 
       :number_of_random_vectors => 8, 
-      :window => Float::Infinity, 
+      :window => Float::INFINITY, 
       :number_of_independent_projections => 150
     }) # Creates an in-memory binary LSH index for 100-dim vectors, 8 bits, 150 independent projections
     v1 = index.random_vector(100)
