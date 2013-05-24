@@ -17,10 +17,10 @@
 require_relative '../lib/lsh'
 
 dim = 1000 # Dimension
-random_dim = 20 # Number of actual random N(0,1) elements used to create random vector
-hash_size = 8 # Hash size (in bits for binary LSH)
+random_dim = 5 # Number of actual random N(0,1) elements used to create random vector
+hash_size = 16 # Hash size (in bits for binary LSH)
 window_size = Float::INFINITY # Binary LSH
-n_projections = 50 # Number of independent projections
+n_projections = 260 # Number of independent projections
 multiprobe_radius = 0 # Multiprobe radius (set to 0 to disable multiprobe)
 fms_limit = 5 # Number of items to take into account in the k-NN for f-measure evaluation
 # storage = LSH::Storage::RedisBackend.new # Redis backend
@@ -37,9 +37,9 @@ index = LSH::Index.new({
 # Test dataset
 vectors = []
 expand_dim = LSH::MathUtil.random_gaussian_matrix(random_dim, dim)
-1000.times { |i| vectors << index.random_vector(random_dim) * expand_dim } 
+3000.times { |i| vectors << index.random_vector_unit(random_dim) * expand_dim } 
 # Adding to index
-vectors.each { |v| index.add(v) }
+vectors.each_with_index { |v, i| t0 = Time.now; index.add(v); puts "Added vector #{i} in #{Time.now - t0}" }
 
 # Nearest neighbors in query result?
 bf_times = []
@@ -48,11 +48,14 @@ scores = []
 sizes = []
 fms_scores = []
 vectors.each_with_index do |vector, i|
+  GC.start
+  break if i == 100
   t0 = Time.now
-  similar_vectors = index.order_vectors_by_similarity(vector, vectors)
+  similar_vectors = vectors.map { |v| [ v, index.similarity(vector, v) ] } .sort_by { |v, sim| sim } .reverse .map { |vs| vs[0] }
   t1 = Time.now
   results = index.query(vector, multiprobe_radius)
   t2 = Time.now
+  results = results.map { |result| result[:data] }
   sizes << results.size
   $stderr.puts "#{results.size} results for vector #{i}"
   k = 0
@@ -78,6 +81,9 @@ end
 
 $stderr.puts ''
 $stderr.puts ''
+
+pid, size = `ps ax -o pid,rss | grep -E "^[[:space:]]*#{$$}"`.strip.split.map(&:to_i)
+$stderr.puts "Memory size: #{size} kB"
 
 avg_size = 0.0
 sizes.each { |s| avg_size += s }
