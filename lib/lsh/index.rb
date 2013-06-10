@@ -99,10 +99,7 @@ module LSH
     end
 
     def order_results_by_similarity(vector, results)
-      # Faster than vectors.sort - we precompute all similarities to vector
-      # and order using those
-      similarities = results.map { |result| [ result[:hash], result[:id], result[:data], similarity(vector, result[:data]) ] }
-      similarities.sort_by { |hash, id, vector, sim| sim } .reverse .map { |vs| { :hash => vs[0], :id => vs[1], :data => vs[2] } }
+      results.sort_by { |result| similarity(vector, result[:data]) } .reverse
     end
 
     def hashes(vector)
