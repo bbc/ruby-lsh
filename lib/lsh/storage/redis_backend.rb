@@ -147,17 +147,13 @@ module LSH
       end
 
       def query_buckets(hashes)
-        results_hashes = {}
-        hashes.each_with_index do |hash, i|
+        keys = hashes.each_with_index.map do |hash, i|
           bucket = find_bucket(i)
-          vector_hashes_in_bucket = @redis.smembers("#{bucket}:#{hash}")
-          if vector_hashes_in_bucket
-            vector_hashes_in_bucket.each do |vector_hash|
-              results_hashes[vector_hash] = true
-            end
-          end
+          "#{bucket}:#{hash}"
         end
-        results_hashes.keys.map do |vector_hash|
+        results_hashes = @redis.sunion(keys)
+
+        results_hashes.map do |vector_hash|
           {
             :data => load_vector(vector_hash),
             :hash => vector_hash.to_i,
