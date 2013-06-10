@@ -16,6 +16,22 @@
 
 require 'helper'
 require 'tmpdir'
+require 'mock_redis'
+
+# Patch del and sunion to accept a list of keys. This should probably be pushed
+# upstream.
+class MockRedis
+  def del(*keys)
+    keys = keys.first if keys.length == 1 and keys.first.is_a? Enumerable
+    super *keys
+  end
+
+  def sunion(*keys)
+    keys = keys.first if keys.length == 1 and keys.first.is_a? Enumerable
+    super *keys
+  end
+end
+
 
 class TestStorageRedis < Test::Unit::TestCase
 
@@ -95,9 +111,9 @@ class TestStorageRedis < Test::Unit::TestCase
   def test_create_new_bucket
     assert_equal nil, @redis.get("lsh:buckets")
     @storage.create_new_bucket
-    assert_equal 1, @redis.get("lsh:buckets")
+    assert_equal "1", @redis.get("lsh:buckets")
     @storage.create_new_bucket
-    assert_equal 2, @redis.get("lsh:buckets")
+    assert_equal "2", @redis.get("lsh:buckets")
   end
 
   def test_add_vector_hash_to_bucket_find_query
@@ -120,41 +136,3 @@ class TestStorageRedis < Test::Unit::TestCase
 
 end
 
-class MockRedis
-
-  def initialize
-    @data = {}
-  end
-
-  def get(key)
-    @data[key]
-  end
-
-  def set(key, value)
-    @data[key] = value
-  end
-
-  def incr(key)
-    @data[key] ||= 0
-    @data[key] += 1
-  end
-
-  def sadd(key, el)
-    @data[key] ||= []
-    @data[key] << el
-  end
-
-  def smembers(key)
-    @data[key]
-  end
-
-  def keys(pattern)
-    keys = @data.keys.select { |k| k =~ %r{#{pattern.gsub('*', '.*')}} }
-    keys
-  end
-
-  def del(*keys)
-    keys.flatten.each { |k| @data.delete(k) }
-  end
-
-end
