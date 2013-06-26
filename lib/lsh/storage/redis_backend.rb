@@ -30,6 +30,7 @@ module LSH
         @data_dir = params[:data_dir]
         Dir.mkdir(@data_dir) unless File.exists?(@data_dir)
         Dir.mkdir(File.join(@data_dir, 'projections')) unless File.exists?(File.join(@data_dir, 'projections'))
+        @vectors = {}
       end
 
       def reset!
@@ -45,6 +46,7 @@ module LSH
         keys = @redis.keys("lsh:id_to_vector:*")
         @redis.del(keys) unless keys.empty?
         delete_dat_files_in_dir(@data_dir)
+        @vectors = {}
       end
 
       def clear_projections!
@@ -112,12 +114,15 @@ module LSH
       def save_vector(vector, vector_hash)
         path = File.join(@data_dir, vector_hash.to_s+'.dat')
         vector.save(path) unless File.exists?(path)
+        @vectors[vector_hash] = vector
       end
 
       def load_vector(hash)
-        vector = MathUtil.zeros(1, parameters[:dim])
-        vector.load(File.join(@data_dir, hash+'.dat'))
-        vector
+        @vectors[hash.to_i] || (
+          vector = MathUtil.zeros(1, parameters[:dim])
+          vector.load(File.join(@data_dir, hash+'.dat'))
+          vector
+        )
       end
 
       def add_vector(vector, vector_hash)
