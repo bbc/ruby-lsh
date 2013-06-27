@@ -83,9 +83,9 @@ class TestIndex < Test::Unit::TestCase
       r1 = { :data => v1, :hash => v1.hash, :id => 'a' }
       r2 = { :data => v2, :hash => v2.hash, :id => 'b' }
       r3 = { :data => v3, :hash => v3.hash, :id => 'c' }
-      d11 = @index.similarity(v1, v1)
-      d12 = @index.similarity(v1, v2)
-      d13 = @index.similarity(v1, v3)
+      d11 = @index.similarity(v1, v1.transpose)
+      d12 = @index.similarity(v1, v2.transpose)
+      d13 = @index.similarity(v1, v3.transpose)
       if d11 > d12 and d12 > d13
         assert_equal [r1, r2, r3], @index.order_results_by_similarity(v1, [r1,r2,r3])
       elsif d11 > d13 and d13 > d12

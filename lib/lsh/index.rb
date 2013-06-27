@@ -99,7 +99,8 @@ module LSH
     end
 
     def order_results_by_similarity(vector, results)
-      results.sort_by { |result| similarity(vector, result[:data]) } .reverse
+      vector_t = vector.transpose
+      results.sort_by { |result| similarity(result[:data], vector_t) } .reverse
     end
 
     def hashes(vector)

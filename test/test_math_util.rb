@@ -30,7 +30,7 @@ class MathUtilTest < Test::Unit::TestCase
   end
 
   def test_dot
-    assert_equal Float, LSH::MathUtil.dot(LSH::MathUtil.random_gaussian_matrix(1, 10), LSH::MathUtil.random_gaussian_matrix(1, 10)).class
+    assert_equal Float, LSH::MathUtil.dot(LSH::MathUtil.random_gaussian_matrix(1, 10), LSH::MathUtil.random_gaussian_matrix(1, 10).transpose).class
   end
 
   def test_norm
