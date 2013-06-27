@@ -158,11 +158,19 @@ module LSH
         end
         results_hashes = @redis.sunion(keys)
 
-        results_hashes.map do |vector_hash|
+        # Redis' mget does not work for empty lists of keys.
+        ids = if results_hashes.length > 0
+                keys = results_hashes.map {|vector_hash| "lsh:vector_to_id:#{vector_hash}"}
+                @redis.mget(keys)
+              else
+                []
+              end
+
+        results_hashes.zip(ids).map do |vector_hash, id|
           {
             :data => load_vector(vector_hash),
             :hash => vector_hash.to_i,
-            :id => vector_hash_to_id(vector_hash)
+            :id => id
           }
         end
       end
