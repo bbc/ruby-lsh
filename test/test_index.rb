@@ -96,27 +96,26 @@ class TestIndex < Test::Unit::TestCase
 
   def test_add
     v1 = @index.random_vector(10)
-    @index.add(v1)
+    id = @index.add(v1)
     results = @index.storage.query_buckets([@index.array_to_hash(@index.hashes(v1)[0])])
-    assert_equal [{ :data => v1, :hash => v1.hash, :id => nil }], results
+    assert_equal [{ :data => v1, :id => id }], results
   end
 
   def test_add_with_id
     v1 = @index.random_vector(10)
-    @index.add(v1, 'id')
+    id = @index.add(v1, 'id')
+		assert_equal id, 'id'
     results = @index.storage.query_buckets([@index.array_to_hash(@index.hashes(v1)[0])])
-    assert_equal [{ :data => v1, :hash => v1.hash, :id => 'id' }], results 
-    assert_equal 'id', @index.vector_hash_to_id(v1.hash)
+    assert_equal [{ :data => v1, :id => 'id' }], results 
     assert_equal v1, @index.id_to_vector('id')
   end
 
   def test_query
     100.times do |i|
       v1 = @index.random_vector_unit(10) # If not normed, we can't be sure another vector won't be more similar to v1 than itself
-      @index.add(v1)
+      id = @index.add(v1)
       assert_equal v1, @index.query(v1).first[:data]
-      assert_equal v1.hash, @index.query(v1).first[:hash]
-      assert_equal nil, @index.query(v1).first[:id]
+      assert_equal id, @index.query(v1).first[:id]
     end
   end
 
@@ -144,14 +143,15 @@ class TestIndex < Test::Unit::TestCase
 
   def test_multiprobe_query
     v1 = @index.random_vector(10)
-    @index.storage.add_vector(v1, v1.hash)
+		id = @index.storage.generate_id
+    @index.storage.add_vector(v1, id)
     hash_array = @index.hashes(v1)[0]
     hash_array[0] = (hash_array[0] == 0) ? 1 : 0 # We flip the first bit of the first hash
     # We insert v1 at hamming distance 1 of its real hash
     bucket = @index.storage.find_bucket(0)
-    @index.storage.add_vector_hash_to_bucket(bucket, @index.array_to_hash(hash_array), v1.hash)
+    @index.storage.add_vector_id_to_bucket(bucket, @index.array_to_hash(hash_array), id)
     # But we should still be able to retrieve v1 with multiprobe radius 1
-    assert_equal [{ :data => v1, :hash => v1.hash, :id => nil }], @index.query(v1, 1) 
+    assert_equal [{ :data => v1, :id => id }], @index.query(v1, 1) 
     # It should return no results with no multiprobes
     assert @index.query(v1, 0).empty?
   end

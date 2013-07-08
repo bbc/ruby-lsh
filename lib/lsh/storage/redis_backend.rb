@@ -31,6 +31,7 @@ module LSH
         Dir.mkdir(@data_dir) unless File.exists?(@data_dir)
         Dir.mkdir(File.join(@data_dir, 'projections')) unless File.exists?(File.join(@data_dir, 'projections'))
         @vectors = {}
+        @next_id = 0
       end
 
       def reset!
@@ -40,10 +41,6 @@ module LSH
 
       def clear_data!
         keys = @redis.keys("lsh:bucket:*")
-        @redis.del(keys) unless keys.empty?
-        keys = @redis.keys("lsh:vector_to_id:*")
-        @redis.del(keys) unless keys.empty?
-        keys = @redis.keys("lsh:id_to_vector:*")
         @redis.del(keys) unless keys.empty?
         delete_dat_files_in_dir(@data_dir)
         @vectors = {}
@@ -111,40 +108,34 @@ module LSH
         @redis.incr "lsh:buckets"
       end
 
-      def save_vector(vector, vector_hash)
-        path = File.join(@data_dir, vector_hash.to_s+'.dat')
-        vector.save(path) unless File.exists?(path)
-        @vectors[vector_hash] = vector
+      def generate_id
+        (@next_id += 1).to_s
       end
 
-      def load_vector(hash)
-        @vectors[hash.to_i] || (
+      def save_vector(vector, vector_id)
+        path = File.join(@data_dir, vector_id+'.dat')
+        vector.save(path) unless File.exists?(path)
+        @vectors[vector_id] = vector
+      end
+
+      def load_vector(vector_id)
+        @vectors[vector_id] || (
           vector = MathUtil.zeros(1, parameters[:dim])
-          vector.load(File.join(@data_dir, hash+'.dat'))
+          vector.load(File.join(@data_dir, vector_id+'.dat'))
           vector
         )
       end
 
-      def add_vector(vector, vector_hash)
-        save_vector(vector, vector_hash) # Writing vector to disk if not already there
+      def add_vector(vector, vector_id)
+        save_vector(vector, vector_id) # Writing vector to disk if not already there
       end
 
-      def add_vector_hash_to_bucket(bucket, hash, vector_hash)
-        @redis.sadd "#{bucket}:#{hash}", vector_hash.to_s # Only storing vector's hash in Redis
+      def add_vector_id_to_bucket(bucket, hash, vector_id)
+        @redis.sadd "#{bucket}:#{hash}", vector_id
       end
 
-      def add_vector_id(vector_hash, id)
-        @redis.set "lsh:vector_to_id:#{vector_hash}", id
-        @redis.set "lsh:id_to_vector:#{id}", vector_hash.to_s
-      end
-
-      def vector_hash_to_id(vector_hash)
-        @redis.get "lsh:vector_to_id:#{vector_hash}"
-      end
-
-      def id_to_vector(id)
-        vector_hash = @redis.get "lsh:id_to_vector:#{id}"
-        load_vector(vector_hash)
+      def id_to_vector(vector_id)
+        load_vector(vector_id)
       end
 
       def find_bucket(i)
@@ -156,21 +147,12 @@ module LSH
           bucket = find_bucket(i)
           "#{bucket}:#{hash}"
         end
-        results_hashes = @redis.sunion(keys)
+        result_ids = @redis.sunion(keys)
 
-        # Redis' mget does not work for empty lists of keys.
-        ids = if results_hashes.length > 0
-                keys = results_hashes.map {|vector_hash| "lsh:vector_to_id:#{vector_hash}"}
-                @redis.mget(keys)
-              else
-                []
-              end
-
-        results_hashes.zip(ids).map do |vector_hash, id|
+        result_ids.map do |vector_id|
           {
-            :data => load_vector(vector_hash),
-            :hash => vector_hash.to_i,
-            :id => id
+            :data => load_vector(vector_id),
+            :id   => vector_id
           }
         end
       end

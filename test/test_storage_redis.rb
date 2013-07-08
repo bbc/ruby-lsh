@@ -62,8 +62,9 @@ class TestStorageRedis < Test::Unit::TestCase
   def test_reset
     index = LSH::Index.new(@parameters, @storage)
     v = index.random_vector(10)
-    @storage.add_vector(v, v.hash)
-    @storage.add_vector_hash_to_bucket(@storage.find_bucket(0), 'hash', v.hash)
+    id = @storage.generate_id
+    @storage.add_vector(v, id)
+    @storage.add_vector_id_to_bucket(@storage.find_bucket(0), 'hash', id)
     assert (@storage.has_index?)
     @storage.reset!
     assert (not @storage.has_index?)
@@ -74,8 +75,9 @@ class TestStorageRedis < Test::Unit::TestCase
   def test_clear_data
     index = LSH::Index.new(@parameters, @storage)
     v = index.random_vector(10)
-    @storage.add_vector(v, v.hash)
-    @storage.add_vector_hash_to_bucket(@storage.find_bucket(0), 'hash', v.hash)
+    id = @storage.generate_id
+    @storage.add_vector(v, id)
+    @storage.add_vector_id_to_bucket(@storage.find_bucket(0), 'hash', id)
     @storage.clear_data!
     assert @storage.has_index? # Storage still has an index
     assert @storage.query_buckets(['hash']).empty? # But no data anymore
@@ -119,19 +121,19 @@ class TestStorageRedis < Test::Unit::TestCase
   def test_add_vector_hash_to_bucket_find_query
     index = LSH::Index.new(@parameters, @storage)
     v = index.random_vector(10)
-    @storage.add_vector(v, v.hash)
-    @storage.add_vector_hash_to_bucket(@storage.find_bucket(0), 'hash', v.hash)
-    assert_equal [{ :data => v, :hash => v.hash, :id => nil }], @storage.query_buckets(['hash'])
+    id = @storage.generate_id
+    @storage.add_vector(v, id)
+    @storage.add_vector_id_to_bucket(@storage.find_bucket(0), 'hash', id)
+    assert_equal [{ :data => v, :id => id }], @storage.query_buckets(['hash'])
   end
 
   def test_add_and_query_vector_id
     index = LSH::Index.new(@parameters, @storage)
     v = index.random_vector(10)
-    @storage.add_vector(v, v.hash)
-    @storage.add_vector_id(v.hash, 'id')
-    @storage.add_vector_hash_to_bucket(@storage.find_bucket(0), 'hash', v.hash)
-    assert_equal 'id', @storage.vector_hash_to_id(v.hash)
-    assert_equal v, @storage.id_to_vector('id')
+    id = @storage.generate_id
+    @storage.add_vector(v, id)
+    @storage.add_vector_id_to_bucket(@storage.find_bucket(0), 'hash', id)
+    assert_equal v, @storage.id_to_vector(id)
   end
 
 end

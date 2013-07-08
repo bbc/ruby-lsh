@@ -39,20 +39,16 @@ module LSH
     end
 
     def add(vector, id = nil)
-      vector_hash = vector.hash
-      storage.add_vector(vector, vector_hash)
-      storage.add_vector_id(vector_hash, id) if id
+      id ||= storage.generate_id
+      storage.add_vector(vector, id)
       hashes(vector).each_with_index do |hash, i|
         hash_i = array_to_hash(hash)
         bucket = storage.find_bucket(i)
-        storage.add_vector_hash_to_bucket(bucket, hash_i, vector_hash)
+        storage.add_vector_id_to_bucket(bucket, hash_i, id)
       end
+      id
     end
-
-    def vector_hash_to_id(vector_hash)
-      storage.vector_hash_to_id(vector_hash)
-    end
-
+    
     def id_to_vector(id)
       storage.id_to_vector(id)
     end
@@ -71,7 +67,7 @@ module LSH
           probes_hashes = probes_arrays.map { |a| array_to_hash(a) }
           results += storage.query_buckets(probes_hashes)
         end
-        results.uniq! { |result| result[:hash] }
+        results.uniq! { |result| result[:id] }
       end
       order_results_by_similarity(vector, results)
     end
@@ -83,7 +79,7 @@ module LSH
 
     def query_ids_by_vector(vector, multiprobe_radius = 0)
       results = query(vector, multiprobe_radius)
-      results.map { |result| vector_hash_to_id(result[:hash]) }
+      results.map { |result| result[:id] }
     end
 
     def multiprobe_hashes_arrays(hash_arrays, multiprobe_radius)
