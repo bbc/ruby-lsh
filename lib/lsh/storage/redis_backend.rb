@@ -26,12 +26,14 @@ module LSH
       attr_reader :redis, :data_dir
       attr_accessor :vector_cache, :cache_vectors
 
-      def initialize(params = { :redis => { :host => '127.0.0.1', :port => 6379 }, :data_dir => 'data' })
+      def initialize(params = {})
+        defaults = {:redis => {}, :data_dir => "data", :cache_vectors => TRUE}
+        params = defaults.merge params
         @redis = Redis.new(params[:redis])
         @data_dir = params[:data_dir]
         Dir.mkdir(@data_dir) unless File.exists?(@data_dir)
         Dir.mkdir(File.join(@data_dir, 'projections')) unless File.exists?(File.join(@data_dir, 'projections'))
-        @cache_vectors = params.fetch :cache_vectors, TRUE
+        @cache_vectors = params[:cache_vectors]
         @vector_cache = {}
       end
 
