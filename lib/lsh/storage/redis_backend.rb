@@ -114,7 +114,8 @@ module LSH
 
       def save_vector(vector, vector_id)
         path = File.join(@data_dir, vector_id+'.dat')
-        vector.save(path) unless File.exists?(path)
+        raise "File #{path} already exists" if File.exists?(path)
+        vector.save(path) 
         @vectors[vector_id] = vector
       end
 
