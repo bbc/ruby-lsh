@@ -31,7 +31,6 @@ module LSH
         Dir.mkdir(@data_dir) unless File.exists?(@data_dir)
         Dir.mkdir(File.join(@data_dir, 'projections')) unless File.exists?(File.join(@data_dir, 'projections'))
         @vectors = {}
-        @next_id = 0
       end
 
       def reset!
@@ -44,6 +43,7 @@ module LSH
         @redis.del(keys) unless keys.empty?
         delete_dat_files_in_dir(@data_dir)
         @vectors = {}
+        @redis.set("lsh:max_vector_id", 0)
       end
 
       def clear_projections!
@@ -109,7 +109,7 @@ module LSH
       end
 
       def generate_id
-        (@next_id += 1).to_s
+        (@redis.incr "lsh:max_vector_id").to_s
       end
 
       def save_vector(vector, vector_id)

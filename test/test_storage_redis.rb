@@ -39,6 +39,7 @@ class TestStorageRedis < Test::Unit::TestCase
     @redis = MockRedis.new
     Redis.expects(:new).returns(@redis)
     @storage = LSH::Storage::RedisBackend.new(:data_dir => File.join(Dir.tmpdir, 'ruby-lsh-test-data'))
+    @storage.reset!
     @parameters = {
       :dim => 10,
       :number_of_random_vectors => 8,
@@ -134,6 +135,11 @@ class TestStorageRedis < Test::Unit::TestCase
     @storage.add_vector(v, id)
     @storage.add_vector_id_to_bucket(@storage.find_bucket(0), 'hash', id)
     assert_equal v, @storage.id_to_vector(id)
+  end
+
+  def test_generate_id
+    assert_equal @storage.generate_id, "1"
+    assert_equal @storage.generate_id, "2"
   end
 
 end
