@@ -24,13 +24,15 @@ module LSH
     class RedisBackend
 
       attr_reader :redis, :data_dir
+      attr_accessor :vector_cache, :cache_vectors
 
       def initialize(params = { :redis => { :host => '127.0.0.1', :port => 6379 }, :data_dir => 'data' })
         @redis = Redis.new(params[:redis])
         @data_dir = params[:data_dir]
         Dir.mkdir(@data_dir) unless File.exists?(@data_dir)
         Dir.mkdir(File.join(@data_dir, 'projections')) unless File.exists?(File.join(@data_dir, 'projections'))
-        @vectors = {}
+        @cache_vectors = params.fetch :cache_vectors, TRUE
+        @vector_cache = {}
       end
 
       def reset!
@@ -42,8 +44,8 @@ module LSH
         keys = @redis.keys("lsh:bucket:*")
         @redis.del(keys) unless keys.empty?
         delete_dat_files_in_dir(@data_dir)
-        @vectors = {}
         @redis.set("lsh:max_vector_id", 0)
+        @vector_cache = {}
       end
 
       def clear_projections!
@@ -116,13 +118,14 @@ module LSH
         path = File.join(@data_dir, vector_id+'.dat')
         raise "File #{path} already exists" if File.exists?(path)
         vector.save(path) 
-        @vectors[vector_id] = vector
+        @vector_cache[vector_id] = vector if @cache_vectors
       end
 
       def load_vector(vector_id)
-        @vectors[vector_id] || (
+        @vector_cache[vector_id] || (
           vector = MathUtil.zeros(1, parameters[:dim])
           vector.load(File.join(@data_dir, vector_id+'.dat'))
+          @vector_cache[vector_id] = vector if @cache_vectors
           vector
         )
       end

@@ -142,5 +142,30 @@ class TestStorageRedis < Test::Unit::TestCase
     assert_equal @storage.generate_id, "2"
   end
 
+  def test_cache
+    index = LSH::Index.new(@parameters, @storage)
+    id = @storage.generate_id
+    v = index.random_vector(10)
+    @storage.add_vector(v, id)
+    assert_equal v, @storage.vector_cache[id]
+    assert_equal v, @storage.id_to_vector(id)
+    @storage.vector_cache = {}
+    assert_equal v, @storage.id_to_vector(id)
+    assert_equal v, @storage.vector_cache[id]
+  end
+
+  def test_no_cache
+    index = LSH::Index.new(@parameters, @storage)
+    @storage.cache_vectors = FALSE
+    id = @storage.generate_id
+    v = index.random_vector(10)
+    @storage.add_vector(v, id)
+    assert_equal nil, @storage.vector_cache[id]
+    assert_equal v, @storage.id_to_vector(id)
+    @storage.vector_cache = {}
+    assert_equal v, @storage.id_to_vector(id)
+    assert_equal nil, @storage.vector_cache[id]
+  end
+
 end
 
