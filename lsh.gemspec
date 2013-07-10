@@ -25,4 +25,9 @@ Gem::Specification.new do |s|
   s.add_dependency 'json'
   s.add_dependency 'redis'
   s.add_dependency 'sinatra'
+  
+  s.add_development_dependency 'mock_redis'
+  s.add_development_dependency 'rack-test'
+  s.add_development_dependency 'rake'
+  s.add_development_dependency 'mocha'
 end

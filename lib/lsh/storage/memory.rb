@@ -24,48 +24,42 @@ module LSH
       attr_accessor :parameters
       attr_reader   :buckets
 
+      def initialize
+        reset!
+      end
+
       def has_index?
         projections and parameters and @buckets
       end
 
       def reset!
-        @buckets = nil
-        @vectors = nil
-        @vector_hash_to_id = nil
-        @id_to_vector = nil
+        @buckets = []
+        @vectors = {}
+        @next_id = 0
       end
 
       def create_new_bucket
-        @buckets ||= []
         @buckets << {}
       end
 
-      def add_vector(vector, vector_hash)
-        @vectors ||= {}
-        @vectors[vector_hash] = vector
+      def generate_id
+        @next_id += 1
       end
 
-      def add_vector_hash_to_bucket(bucket, hash, vector_hash)
+      def add_vector(vector, id)
+        @vectors[id] = vector
+      end
+
+      def add_vector_id_to_bucket(bucket, hash, vector_id)
         if bucket.has_key? hash
-          bucket[hash] << vector_hash
+          bucket[hash] << vector_id
         else
-          bucket[hash] = [vector_hash]
+          bucket[hash] = [vector_id]
         end
       end
 
-      def add_vector_id(vector_hash, id)
-        @vector_hash_to_id ||= {}
-        @vector_hash_to_id[vector_hash] = id
-        @id_to_vector ||= {}
-        @id_to_vector[id] = vector_hash
-      end
-
-      def vector_hash_to_id(vector_hash)
-        @vector_hash_to_id[vector_hash] if @vector_hash_to_id
-      end
-
       def id_to_vector(id)
-        @vectors[@id_to_vector[id]] if @id_to_vector
+        @vectors[id]
       end
 
       def find_bucket(i)
@@ -73,20 +67,19 @@ module LSH
       end
 
       def query_buckets(hashes)
-        results_hashes = {}
+        result_ids = {}
         hashes.each_with_index do |hash, i|
           vectors_hashes_in_bucket = @buckets[i][hash]
           if vectors_hashes_in_bucket
-            vectors_hashes_in_bucket.each do |vector_hash|
-              results_hashes[vector_hash] = true
+            vectors_hashes_in_bucket.each do |vector_id|
+              result_ids[vector_id] = true
             end
           end
         end
-        results_hashes.keys.map do |vector_hash|
+        result_ids.keys.map do |vector_id|
           { 
-            :data => @vectors[vector_hash], 
-            :hash => vector_hash, 
-            :id => vector_hash_to_id(vector_hash)
+            :data => @vectors[vector_id], 
+            :id => vector_id, 
           }
         end
       end
