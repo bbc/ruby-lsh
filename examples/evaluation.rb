@@ -51,7 +51,7 @@ vectors.each_with_index do |vector, i|
   GC.start
   break if i == 100
   t0 = Time.now
-  similar_vectors = vectors.map { |v| [ v, index.similarity(vector, v) ] } .sort_by { |v, sim| sim } .reverse .map { |vs| vs[0] }
+  similar_vectors = vectors.map { |v| [ v, index.similarity(vector, v.transpose) ] } .sort_by { |v, sim| sim } .reverse .map { |vs| vs[0] }
   t1 = Time.now
   results = index.query(vector, multiprobe_radius)
   t2 = Time.now
@@ -64,7 +64,7 @@ vectors.each_with_index do |vector, i|
   end
   scores << k
   $stderr.puts "Consecutive nearest neighbours up to #{k} appear in results"
-  $stderr.puts "Similarity of first missed nearest neighour: #{index.similarity(similar_vectors[k], vector)}" if k < similar_vectors.size
+  $stderr.puts "Similarity of first missed nearest neighour: #{index.similarity(similar_vectors[k], vector.transpose)}" if k < similar_vectors.size
   $stderr.puts "Time for brute-force in-memory search: #{t1 - t0}"
   bf_times << t1 - t0
   $stderr.puts "Time for LSH search: #{t2 - t1}"
