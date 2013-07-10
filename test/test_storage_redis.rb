@@ -16,6 +16,22 @@
 
 require 'helper'
 require 'tmpdir'
+require 'mock_redis'
+
+# Patch del and sunion to accept a list of keys. This should probably be pushed
+# upstream.
+class MockRedis
+  def del(*keys)
+    keys = keys.first if keys.length == 1 and keys.first.is_a? Enumerable
+    super *keys
+  end
+
+  def sunion(*keys)
+    keys = keys.first if keys.length == 1 and keys.first.is_a? Enumerable
+    super *keys
+  end
+end
+
 
 class TestStorageRedis < Test::Unit::TestCase
 
@@ -23,6 +39,7 @@ class TestStorageRedis < Test::Unit::TestCase
     @redis = MockRedis.new
     Redis.expects(:new).returns(@redis)
     @storage = LSH::Storage::RedisBackend.new(:data_dir => File.join(Dir.tmpdir, 'ruby-lsh-test-data'))
+    @storage.reset!
     @parameters = {
       :dim => 10,
       :number_of_random_vectors => 8,
@@ -46,8 +63,9 @@ class TestStorageRedis < Test::Unit::TestCase
   def test_reset
     index = LSH::Index.new(@parameters, @storage)
     v = index.random_vector(10)
-    @storage.add_vector(v, v.hash)
-    @storage.add_vector_hash_to_bucket(@storage.find_bucket(0), 'hash', v.hash)
+    id = @storage.generate_id
+    @storage.add_vector(v, id)
+    @storage.add_vector_id_to_bucket(@storage.find_bucket(0), 'hash', id)
     assert (@storage.has_index?)
     @storage.reset!
     assert (not @storage.has_index?)
@@ -58,8 +76,9 @@ class TestStorageRedis < Test::Unit::TestCase
   def test_clear_data
     index = LSH::Index.new(@parameters, @storage)
     v = index.random_vector(10)
-    @storage.add_vector(v, v.hash)
-    @storage.add_vector_hash_to_bucket(@storage.find_bucket(0), 'hash', v.hash)
+    id = @storage.generate_id
+    @storage.add_vector(v, id)
+    @storage.add_vector_id_to_bucket(@storage.find_bucket(0), 'hash', id)
     @storage.clear_data!
     assert @storage.has_index? # Storage still has an index
     assert @storage.query_buckets(['hash']).empty? # But no data anymore
@@ -95,66 +114,58 @@ class TestStorageRedis < Test::Unit::TestCase
   def test_create_new_bucket
     assert_equal nil, @redis.get("lsh:buckets")
     @storage.create_new_bucket
-    assert_equal 1, @redis.get("lsh:buckets")
+    assert_equal "1", @redis.get("lsh:buckets")
     @storage.create_new_bucket
-    assert_equal 2, @redis.get("lsh:buckets")
+    assert_equal "2", @redis.get("lsh:buckets")
   end
 
   def test_add_vector_hash_to_bucket_find_query
     index = LSH::Index.new(@parameters, @storage)
     v = index.random_vector(10)
-    @storage.add_vector(v, v.hash)
-    @storage.add_vector_hash_to_bucket(@storage.find_bucket(0), 'hash', v.hash)
-    assert_equal [{ :data => v, :hash => v.hash, :id => nil }], @storage.query_buckets(['hash'])
+    id = @storage.generate_id
+    @storage.add_vector(v, id)
+    @storage.add_vector_id_to_bucket(@storage.find_bucket(0), 'hash', id)
+    assert_equal [{ :data => v, :id => id }], @storage.query_buckets(['hash'])
   end
 
   def test_add_and_query_vector_id
     index = LSH::Index.new(@parameters, @storage)
     v = index.random_vector(10)
-    @storage.add_vector(v, v.hash)
-    @storage.add_vector_id(v.hash, 'id')
-    @storage.add_vector_hash_to_bucket(@storage.find_bucket(0), 'hash', v.hash)
-    assert_equal 'id', @storage.vector_hash_to_id(v.hash)
-    assert_equal v, @storage.id_to_vector('id')
+    id = @storage.generate_id
+    @storage.add_vector(v, id)
+    @storage.add_vector_id_to_bucket(@storage.find_bucket(0), 'hash', id)
+    assert_equal v, @storage.id_to_vector(id)
+  end
+
+  def test_generate_id
+    assert_equal @storage.generate_id, "1"
+    assert_equal @storage.generate_id, "2"
+  end
+
+  def test_cache
+    index = LSH::Index.new(@parameters, @storage)
+    id = @storage.generate_id
+    v = index.random_vector(10)
+    @storage.add_vector(v, id)
+    assert_equal v, @storage.vector_cache[id]
+    assert_equal v, @storage.id_to_vector(id)
+    @storage.vector_cache = {}
+    assert_equal v, @storage.id_to_vector(id)
+    assert_equal v, @storage.vector_cache[id]
+  end
+
+  def test_no_cache
+    index = LSH::Index.new(@parameters, @storage)
+    @storage.cache_vectors = FALSE
+    id = @storage.generate_id
+    v = index.random_vector(10)
+    @storage.add_vector(v, id)
+    assert_equal nil, @storage.vector_cache[id]
+    assert_equal v, @storage.id_to_vector(id)
+    @storage.vector_cache = {}
+    assert_equal v, @storage.id_to_vector(id)
+    assert_equal nil, @storage.vector_cache[id]
   end
 
 end
 
-class MockRedis
-
-  def initialize
-    @data = {}
-  end
-
-  def get(key)
-    @data[key]
-  end
-
-  def set(key, value)
-    @data[key] = value
-  end
-
-  def incr(key)
-    @data[key] ||= 0
-    @data[key] += 1
-  end
-
-  def sadd(key, el)
-    @data[key] ||= []
-    @data[key] << el
-  end
-
-  def smembers(key)
-    @data[key]
-  end
-
-  def keys(pattern)
-    keys = @data.keys.select { |k| k =~ %r{#{pattern.gsub('*', '.*')}} }
-    keys
-  end
-
-  def del(*keys)
-    keys.flatten.each { |k| @data.delete(k) }
-  end
-
-end

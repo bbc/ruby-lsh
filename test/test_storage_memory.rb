@@ -31,11 +31,11 @@ class TestStorageMemory < Test::Unit::TestCase
   end
 
   def test_reset
-    assert_equal nil, @storage.buckets
+    assert_equal [], @storage.buckets
     @storage.create_new_bucket
     assert (not @storage.buckets.empty?)
     @storage.reset!
-    assert_equal nil, @storage.buckets
+    assert_equal [], @storage.buckets
   end
 
   def test_create_new_bucket_and_find_bucket
@@ -47,16 +47,14 @@ class TestStorageMemory < Test::Unit::TestCase
   def test_add_vector_hash_to_bucket_and_query_buckets
     @storage.create_new_bucket
     v = LSH::MathUtil.random_gaussian_vector(10)
-    @storage.add_vector(v, v.hash)
-    @storage.add_vector_hash_to_bucket(@storage.find_bucket(0), 'hash', v.hash)
-    assert_equal v.hash, @storage.buckets[0]['hash'].first
-    assert_equal [{ :data => v, :hash => v.hash, :id => nil }], @storage.query_buckets(['hash'])
+    @storage.add_vector(v, "id")
+    @storage.add_vector_id_to_bucket(@storage.find_bucket(0), 'hash', "id")
+    assert_equal "id", @storage.buckets[0]['hash'].first
+    assert_equal [{ :data => v, :id => "id" }], @storage.query_buckets(['hash'])
   end
 
   def test_add_and_query_vector_id
-    @storage.add_vector('vector', 'foo')
-    @storage.add_vector_id('foo', 'id')
-    assert_equal 'id', @storage.vector_hash_to_id('foo')
+    @storage.add_vector('vector', 'id')
     assert_equal 'vector', @storage.id_to_vector('id')
   end
 

@@ -24,12 +24,17 @@ module LSH
     class RedisBackend
 
       attr_reader :redis, :data_dir
+      attr_accessor :vector_cache, :cache_vectors
 
-      def initialize(params = { :redis => { :host => '127.0.0.1', :port => 6379 }, :data_dir => 'data' })
+      def initialize(params = {})
+        defaults = {:redis => {}, :data_dir => "data", :cache_vectors => TRUE}
+        params = defaults.merge params
         @redis = Redis.new(params[:redis])
         @data_dir = params[:data_dir]
         Dir.mkdir(@data_dir) unless File.exists?(@data_dir)
         Dir.mkdir(File.join(@data_dir, 'projections')) unless File.exists?(File.join(@data_dir, 'projections'))
+        @cache_vectors = params[:cache_vectors]
+        @vector_cache = {}
       end
 
       def reset!
@@ -40,11 +45,9 @@ module LSH
       def clear_data!
         keys = @redis.keys("lsh:bucket:*")
         @redis.del(keys) unless keys.empty?
-        keys = @redis.keys("lsh:vector_to_id:*")
-        @redis.del(keys) unless keys.empty?
-        keys = @redis.keys("lsh:id_to_vector:*")
-        @redis.del(keys) unless keys.empty?
         delete_dat_files_in_dir(@data_dir)
+        @redis.set("lsh:max_vector_id", 0)
+        @vector_cache = {}
       end
 
       def clear_projections!
@@ -109,37 +112,36 @@ module LSH
         @redis.incr "lsh:buckets"
       end
 
-      def save_vector(vector, vector_hash)
-        path = File.join(@data_dir, vector_hash.to_s+'.dat')
-        vector.save(path) unless File.exists?(path)
+      def generate_id
+        (@redis.incr "lsh:max_vector_id").to_s
       end
 
-      def load_vector(hash)
-        vector = MathUtil.zeros(1, parameters[:dim])
-        vector.load(File.join(@data_dir, hash+'.dat'))
-        vector
+      def save_vector(vector, vector_id)
+        path = File.join(@data_dir, vector_id+'.dat')
+        raise "File #{path} already exists" if File.exists?(path)
+        vector.save(path) 
+        @vector_cache[vector_id] = vector if @cache_vectors
       end
 
-      def add_vector(vector, vector_hash)
-        save_vector(vector, vector_hash) # Writing vector to disk if not already there
+      def load_vector(vector_id)
+        @vector_cache[vector_id] || (
+          vector = MathUtil.zeros(1, parameters[:dim])
+          vector.load(File.join(@data_dir, vector_id+'.dat'))
+          @vector_cache[vector_id] = vector if @cache_vectors
+          vector
+        )
       end
 
-      def add_vector_hash_to_bucket(bucket, hash, vector_hash)
-        @redis.sadd "#{bucket}:#{hash}", vector_hash.to_s # Only storing vector's hash in Redis
+      def add_vector(vector, vector_id)
+        save_vector(vector, vector_id) # Writing vector to disk if not already there
       end
 
-      def add_vector_id(vector_hash, id)
-        @redis.set "lsh:vector_to_id:#{vector_hash}", id
-        @redis.set "lsh:id_to_vector:#{id}", vector_hash.to_s
+      def add_vector_id_to_bucket(bucket, hash, vector_id)
+        @redis.sadd "#{bucket}:#{hash}", vector_id
       end
 
-      def vector_hash_to_id(vector_hash)
-        @redis.get "lsh:vector_to_id:#{vector_hash}"
-      end
-
-      def id_to_vector(id)
-        vector_hash = @redis.get "lsh:id_to_vector:#{id}"
-        load_vector(vector_hash)
+      def id_to_vector(vector_id)
+        load_vector(vector_id)
       end
 
       def find_bucket(i)
@@ -147,21 +149,16 @@ module LSH
       end
 
       def query_buckets(hashes)
-        results_hashes = {}
-        hashes.each_with_index do |hash, i|
+        keys = hashes.each_with_index.map do |hash, i|
           bucket = find_bucket(i)
-          vector_hashes_in_bucket = @redis.smembers("#{bucket}:#{hash}")
-          if vector_hashes_in_bucket
-            vector_hashes_in_bucket.each do |vector_hash|
-              results_hashes[vector_hash] = true
-            end
-          end
+          "#{bucket}:#{hash}"
         end
-        results_hashes.keys.map do |vector_hash|
+        result_ids = @redis.sunion(keys)
+
+        result_ids.map do |vector_id|
           {
-            :data => load_vector(vector_hash),
-            :hash => vector_hash.to_i,
-            :id => vector_hash_to_id(vector_hash)
+            :data => load_vector(vector_id),
+            :id   => vector_id
           }
         end
       end

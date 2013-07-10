@@ -44,7 +44,7 @@ module LSH
     end
 
     def self.dot(v1, v2)
-      (v1 * v2.transpose)[0,0]
+      (v1 * v2)[0,0]
     end
 
     def self.norm(v)
