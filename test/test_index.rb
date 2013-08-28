@@ -54,24 +54,27 @@ class TestIndex < Test::Unit::TestCase
     v1 = @index.random_vector(10)
     hashes = @index.hashes(v1)
     assert_equal 50, hashes.size # One hash per projection
-    assert_equal 8, hashes.first.size # Each hash has 8 components
-    hashes.first.each { |h| assert (h == 0 or h == 1) } # Float::INFINITY => binary LSH
+    assert hashes.first.is_a? Integer
+    assert hashes.first < 256  # Each hash has 8 components
     # Testing the first hash element
-    if (@index.storage.projections.first * v1.transpose)[0,0] >= 0
-      assert_equal 1, hashes.first.first
+    if (@index.storage.projections.first * v1.transpose)[7,0] >= 0
+      assert_equal 1, hashes.first & 1
     else
-      assert_equal 0, hashes.first.first
+      assert_equal 0, hashes.first & 1
     end
   end
 
   def test_integer_hash
-    v1 = @index.random_vector(10)
-    hashes = @index.hashes(v1)
+    parms = @parameters.clone
+    parms[:window] = 2
+    index = LSH::Index.new(parms)
+    v1 = index.random_vector(10)
+    hashes = index.hashes(v1)
     assert_equal 50, hashes.size # One hash per projection
-    assert_equal 8, hashes.first.size # Each hash has 8 components
+		assert_equal 8, hashes.first.size # Each hash has 8 components
     hashes.first.each { |h| assert h.class == Fixnum } # Continuous LSH
     # Testing the first hash element
-    first_hash_value = ( (@index.storage.projections.first * v1.transpose)[0,0]/ 10).floor
+    first_hash_value = ( (index.storage.projections.first * v1.transpose)[0,0]/ 10).floor
     assert (hashes.first.first == first_hash_value or hashes.first.first == first_hash_value + 1)
   end
 
@@ -97,7 +100,7 @@ class TestIndex < Test::Unit::TestCase
   def test_add
     v1 = @index.random_vector(10)
     id = @index.add(v1)
-    results = @index.storage.query_buckets([@index.array_to_hash(@index.hashes(v1)[0])])
+    results = @index.storage.query_buckets([@index.hashes(v1)[0]])
     assert_equal [{ :data => v1, :id => id }], results
   end
 
@@ -105,7 +108,7 @@ class TestIndex < Test::Unit::TestCase
     v1 = @index.random_vector(10)
     id = @index.add(v1, 'id')
 		assert_equal id, 'id'
-    results = @index.storage.query_buckets([@index.array_to_hash(@index.hashes(v1)[0])])
+    results = @index.storage.query_buckets([@index.hashes(v1)[0]])
     assert_equal [{ :data => v1, :id => 'id' }], results 
     assert_equal v1, @index.id_to_vector('id')
   end
@@ -135,10 +138,10 @@ class TestIndex < Test::Unit::TestCase
     parms = @parameters.clone
     parms[:number_of_random_vectors] = 2
     index = LSH::Index.new(parms)
-    h = [[1,0],[0,1]]
+    h = [2,1]
     assert_equal [], index.multiprobe_hashes_arrays(h, 0)
-    assert_equal [[[0,0],[1,1]],[[1,1],[0,0]]], index.multiprobe_hashes_arrays(h, 1)
-    assert_equal [[[0,0],[1,1]],[[1,1],[0,0]],[[0,1],[1,0]]], index.multiprobe_hashes_arrays(h, 2)
+    assert_equal [[3,0],[0,3]], index.multiprobe_hashes_arrays(h, 1)
+    assert_equal [[3,0],[0,3],[1,2]], index.multiprobe_hashes_arrays(h, 2)
   end
 
   def test_multiprobe_query
@@ -146,10 +149,10 @@ class TestIndex < Test::Unit::TestCase
 		id = @index.storage.generate_id
     @index.storage.add_vector(v1, id)
     hash_array = @index.hashes(v1)[0]
-    hash_array[0] = (hash_array[0] == 0) ? 1 : 0 # We flip the first bit of the first hash
+    hash_array ^= 1 # We flip the first bit of the first hash
     # We insert v1 at hamming distance 1 of its real hash
     bucket = @index.storage.find_bucket(0)
-    @index.storage.add_vector_id_to_bucket(bucket, @index.array_to_hash(hash_array), id)
+    @index.storage.add_vector_id_to_bucket(bucket, hash_array, id)
     # But we should still be able to retrieve v1 with multiprobe radius 1
     assert_equal [{ :data => v1, :id => id }], @index.query(v1, 1) 
     # It should return no results with no multiprobes

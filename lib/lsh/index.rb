@@ -86,8 +86,7 @@ module LSH
       mp_arrays = []
       (1..multiprobe_radius).to_a.each do |radius|
         (0..(storage.parameters[:number_of_random_vectors] - 1)).to_a.combination(radius).each do |flips|
-          probes = Marshal.load(Marshal.dump(hash_arrays))
-          probes.each { |probe| flips.each { |d| probe[d] = (probe[d] == 1) ? 0 : 1 } }
+          probes = hash_arrays.map { |probe| flips.inject(probe) { |probe, d| probe ^ (1 << d) } }
           mp_arrays << probes
         end
       end
@@ -108,22 +107,19 @@ module LSH
     end
  
     def hash(vector, projection, bias = true)
-      hash = []
       dot_products = (projection * vector.transpose).column(0).to_a
       window = storage.parameters[:window]
-      dot_products.each do |dot_product|
-        if window == Float::INFINITY # Binary LSH
-          if dot_product >= 0
-            hash << 1
-          else
-            hash << 0
-          end
-        else
+
+      if window == Float::INFINITY # Binary LSH
+        dot_products.inject(0) do |hash, dot_product|
+          (hash << 1) + (dot_product >= 0 ? 1 : 0)
+        end
+      else
+        dot_products.map do |dot_product|
           b = bias ? MathUtil.random_uniform : 0.0
-          hash << (b + dot_product / window).floor
+          (b + dot_product / window).floor
         end
       end
-      hash
     end
 
     def hashes_are_binary?
@@ -140,16 +136,22 @@ module LSH
     end
 
     def array_to_hash(array)
-      return array.hash
-      # Derives a 28 bit hash value from an array of integers
-      # http://stackoverflow.com/questions/2909106/python-whats-a-correct-and-good-way-to-implement-hash#2909572
-      # TODO: Check it works for non-binary LSH
-      #return 0 if array.size == 0
-      #value = (array.first << 7)
-      #array.each do |v|
-      #  value = (101 * value + v) & 0xffffff
-      #end
-      #value
+      # Convert the output of 'hash' to an integer used in the index. For
+      # binary lsh, we use the base-10 representation of the binary hash; for
+      # integer lsh, use a rolling hash.
+      if array.is_a? Integer
+        array
+      else
+        # Derives a 28 bit hash value from an array of integers
+        # http://stackoverflow.com/questions/2909106/python-whats-a-correct-and-good-way-to-implement-hash#2909572
+        # TODO: Check it works for non-binary LSH
+        return 0 if array.size == 0
+        value = (array.first << 7)
+        array.each do |v|
+          value = (101 * value + v) & 0xffffff
+        end
+        value
+      end
     end
 
      def generate_projections(dim, k, l)
