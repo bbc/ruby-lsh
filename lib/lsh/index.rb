@@ -42,7 +42,7 @@ module LSH
       id ||= storage.generate_id
       storage.add_vector(vector, id)
       hashes(vector).each_with_index do |hash, i|
-        hash_i = array_to_hash(hash)
+        hash_i = hash_to_int(hash)
         bucket = storage.find_bucket(i)
         storage.add_vector_id_to_bucket(bucket, hash_i, id)
       end
@@ -55,7 +55,7 @@ module LSH
 
     def query(vector, multiprobe_radius = 0)
       hash_arrays = hashes(vector)
-      hashes = hash_arrays.map { |a| array_to_hash(a) }
+      hashes = hash_arrays.map { |a| hash_to_int(a) }
       results = storage.query_buckets(hashes)
       # Multiprobe LSH
       # Take query hashes, move them around at radius r, and use them to do another query
@@ -64,7 +64,7 @@ module LSH
         raise Exception.new("Non-zero multiprobe radius only implemented for binary LSH") unless hashes_are_binary?
         mp_arrays = multiprobe_hashes_arrays(hash_arrays, multiprobe_radius)
         mp_arrays.each do |probes_arrays|
-          probes_hashes = probes_arrays.map { |a| array_to_hash(a) }
+          probes_hashes = probes_arrays.map { |a| hash_to_int(a) }
           results += storage.query_buckets(probes_hashes)
         end
         results.uniq! { |result| result[:id] }
@@ -86,8 +86,7 @@ module LSH
       mp_arrays = []
       (1..multiprobe_radius).to_a.each do |radius|
         (0..(storage.parameters[:number_of_random_vectors] - 1)).to_a.combination(radius).each do |flips|
-          probes = Marshal.load(Marshal.dump(hash_arrays))
-          probes.each { |probe| flips.each { |d| probe[d] = (probe[d] == 1) ? 0 : 1 } }
+          probes = hash_arrays.map { |probe| flips.inject(probe) { |probe, d| probe ^ (1 << d) } }
           mp_arrays << probes
         end
       end
@@ -108,22 +107,19 @@ module LSH
     end
  
     def hash(vector, projection, bias = true)
-      hash = []
       dot_products = (projection * vector.transpose).column(0).to_a
       window = storage.parameters[:window]
-      dot_products.each do |dot_product|
-        if window == Float::INFINITY # Binary LSH
-          if dot_product >= 0
-            hash << 1
-          else
-            hash << 0
-          end
-        else
+
+      if window == Float::INFINITY # Binary LSH
+        dot_products.inject(0) do |hash, dot_product|
+          (hash << 1) + (dot_product >= 0 ? 1 : 0)
+        end
+      else
+        dot_products.map do |dot_product|
           b = bias ? MathUtil.random_uniform : 0.0
-          hash << (b + dot_product / window).floor
+          (b + dot_product / window).floor
         end
       end
-      hash
     end
 
     def hashes_are_binary?
@@ -139,17 +135,15 @@ module LSH
       r /= MathUtil.norm(r)
     end
 
-    def array_to_hash(array)
-      return array.hash
-      # Derives a 28 bit hash value from an array of integers
-      # http://stackoverflow.com/questions/2909106/python-whats-a-correct-and-good-way-to-implement-hash#2909572
-      # TODO: Check it works for non-binary LSH
-      #return 0 if array.size == 0
-      #value = (array.first << 7)
-      #array.each do |v|
-      #  value = (101 * value + v) & 0xffffff
-      #end
-      #value
+    def hash_to_int(hash)
+      # Convert the output of 'hash' to an integer used in the index. For
+      # binary lsh, we use the base-10 representation of the binary hash; for
+      # integer lsh, use MD5 truncated to 32 bits.
+      if storage.parameters[:window] == Float::INFINITY
+        hash
+      else
+        Digest::MD5.new().digest(hash.to_json).slice(0,4).unpack('N')[0]
+      end
     end
 
      def generate_projections(dim, k, l)
