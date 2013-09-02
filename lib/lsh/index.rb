@@ -42,7 +42,7 @@ module LSH
       id ||= storage.generate_id
       storage.add_vector(vector, id)
       hashes(vector).each_with_index do |hash, i|
-        hash_i = array_to_hash(hash)
+        hash_i = hash_to_int(hash)
         bucket = storage.find_bucket(i)
         storage.add_vector_id_to_bucket(bucket, hash_i, id)
       end
@@ -55,7 +55,7 @@ module LSH
 
     def query(vector, multiprobe_radius = 0)
       hash_arrays = hashes(vector)
-      hashes = hash_arrays.map { |a| array_to_hash(a) }
+      hashes = hash_arrays.map { |a| hash_to_int(a) }
       results = storage.query_buckets(hashes)
       # Multiprobe LSH
       # Take query hashes, move them around at radius r, and use them to do another query
@@ -64,7 +64,7 @@ module LSH
         raise Exception.new("Non-zero multiprobe radius only implemented for binary LSH") unless hashes_are_binary?
         mp_arrays = multiprobe_hashes_arrays(hash_arrays, multiprobe_radius)
         mp_arrays.each do |probes_arrays|
-          probes_hashes = probes_arrays.map { |a| array_to_hash(a) }
+          probes_hashes = probes_arrays.map { |a| hash_to_int(a) }
           results += storage.query_buckets(probes_hashes)
         end
         results.uniq! { |result| result[:id] }
@@ -135,22 +135,14 @@ module LSH
       r /= MathUtil.norm(r)
     end
 
-    def array_to_hash(array)
+    def hash_to_int(hash)
       # Convert the output of 'hash' to an integer used in the index. For
       # binary lsh, we use the base-10 representation of the binary hash; for
-      # integer lsh, use a rolling hash.
-      if array.is_a? Integer
-        array
+      # integer lsh, use MD5 truncated to 32 bits.
+      if storage.parameters[:window] == Float::INFINITY
+        hash
       else
-        # Derives a 28 bit hash value from an array of integers
-        # http://stackoverflow.com/questions/2909106/python-whats-a-correct-and-good-way-to-implement-hash#2909572
-        # TODO: Check it works for non-binary LSH
-        return 0 if array.size == 0
-        value = (array.first << 7)
-        array.each do |v|
-          value = (101 * value + v) & 0xffffff
-        end
-        value
+        Digest::MD5.new().digest(hash.to_json).slice(0,4).unpack('N')[0]
       end
     end
 
