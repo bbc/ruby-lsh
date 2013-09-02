@@ -169,4 +169,17 @@ class TestIndex < Test::Unit::TestCase
     end
   end
 
+  def test_hash_to_int
+    # Should pass through values when using binary LSH.
+    assert_equal 5, @index.hash_to_int(5)
+    
+    # Should behave like a hash function, returning an int for integer LSH.
+    parms = @parameters.clone
+    parms[:window] = 2
+    int_index = LSH::Index.new(parms)
+    assert int_index.hash_to_int([1,2,3]).is_a? Integer
+    assert_equal int_index.hash_to_int([1,2,3]), int_index.hash_to_int([1,2,3])
+    assert_not_equal int_index.hash_to_int([1,2,3]), int_index.hash_to_int([4,5,6])
+  end
+
 end
