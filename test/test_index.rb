@@ -75,6 +75,7 @@ class TestIndex < Test::Unit::TestCase
     hashes.first.each { |h| assert h.class == Fixnum } # Continuous LSH
     # Testing the first hash element
     first_hash_value = ( (index.storage.projections.first * v1.transpose)[0,0]/ 10).floor
+    # Could be in either bucket due to bias.
     assert (hashes.first.first == first_hash_value or hashes.first.first == first_hash_value + 1)
   end
 
